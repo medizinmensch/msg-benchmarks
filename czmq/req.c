@@ -2,10 +2,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include <czmq.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <inttypes.h>
+
+
+#include <czmq.h>
 
 static char *rand_string(char *str, size_t size)
 {
@@ -48,12 +50,12 @@ int signal_close(char *conn)
 int send_msgs(char *send_str, int reps, char *conn, bool debug)
 {
     struct timespec start, end;
-    int request_nbr;
+    ;
     zsock_t *requester = zsock_new(ZMQ_REQ);
     zsock_connect(requester, conn);
 
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-    for (request_nbr = 0; request_nbr != reps; request_nbr++)
+    for (int request_nbr = 0; request_nbr != reps; request_nbr++)
     {
         zstr_send(requester, send_str); // Sending msg request_nbr/reps
         char *str = zstr_recv(requester);
@@ -70,7 +72,7 @@ int send_msgs(char *send_str, int reps, char *conn, bool debug)
 
 void bench_zmq(int reps, char *conn, bool debug)
 {
-    printf("Repetitions, Message Size, Elapsed time in us\n");
+    printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
     char *str;
     for (int i = 0; i < 6; i++)
     {
