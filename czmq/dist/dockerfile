@@ -1,9 +1,0 @@
-FROM ubuntu:18.04
-
-RUN apt-get update
-RUN apt-get install -y build-essential curl libczmq-dev
-RUN echo 'deb http://download.opensuse.org/repositories/network:/messaging:/zeromq:/git-stable/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/network:messaging:zeromq:git-stable.list
-RUN curl -fsSL https://download.opensuse.org/repositories/network:messaging:zeromq:git-stable/xUbuntu_18.04/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/network_messaging_zeromq_git-stable.gpg > /dev/null
-COPY test.c .
-CMD gcc -Wall test.c
-

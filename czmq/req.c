@@ -50,7 +50,7 @@ int signal_close(char *conn)
 int send_msgs(char *send_str, int reps, char *conn, bool debug)
 {
     struct timespec start, end;
-    ;
+    
     zsock_t *requester = zsock_new(ZMQ_REQ);
     zsock_connect(requester, conn);
 
