@@ -41,7 +41,7 @@
 #endif
 
 //  Provide random number from 0..(num-1)
-// #define randof(num)  (int) ((float) (num) * random () / (RAND_MAX + 1.0))
+#define randof(num)  (int) ((float) (num) * random () / (RAND_MAX + 1.0))
 
 //  Receive 0MQ string from socket and convert into C string
 //  Caller must free returned string. Returns NULL if the context

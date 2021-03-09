@@ -1,5 +1,5 @@
 
-gcc rrclient.c -o ./dist/rrclient -L/usr/local/lib -lzmq
+gcc rrclient.c -o ./dist/rrclient -L/usr/local/lib -lzmq -lm
 # gcc rrworker.c -o ./dist/rrworker -L/usr/local/lib -lzmq
 # gcc rrbroker.c -o ./dist/rrbroker -L/usr/local/lib -lzmq
 

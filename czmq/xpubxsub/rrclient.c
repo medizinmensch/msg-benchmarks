@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 
     bench_zmq(10000, conn, false);
 
-    signal_close(conn);
+    // signal_close(conn);
 
     return 0;
 }
