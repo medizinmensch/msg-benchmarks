@@ -6,5 +6,8 @@ gcc rrbroker.c -o ./dist/rrbroker -L/usr/local/lib -lzmq
 
 
 ./dist/rrclient &
+./dist/rrclient &
+./dist/rrclient &
+./dist/rrclient &
 ./dist/rrworker &
 ./dist/rrbroker

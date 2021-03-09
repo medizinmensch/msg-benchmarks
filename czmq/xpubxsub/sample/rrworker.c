@@ -20,7 +20,7 @@ int main (void)
         free (string);
 
         //  Do some 'work'
-        sleep (1);
+        // sleep (1);
 
         //  Send reply back to client
         s_send (responder, "World");
