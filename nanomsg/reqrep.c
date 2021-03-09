@@ -13,7 +13,7 @@
 
 #define NODE0 "node0"
 #define NODE1 "node1"
-#define DEBUG
+// #define DEBUG
 
 static char *rand_string(char *str, size_t size)
 {
@@ -182,7 +182,7 @@ int bench_nanomsg(int reps, const char *conn, int exp)
 
 int main(const int argc, const char **argv)
 {
-        int exp = 7;
+        int exp = 6;
         int reps = 10000;
 
 #ifdef DEBUG

@@ -74,7 +74,7 @@ void bench_zmq(int reps, char *conn, bool debug)
 {
     printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
     char *str;
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 8; i++)
     {
         double size = pow(10, i);
         printf("%d,%.0f,%s,", reps, size, conn);

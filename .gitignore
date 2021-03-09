@@ -1,2 +1,3 @@
 dist/
 .vscode
+czmq/xpubxsub/py/venv

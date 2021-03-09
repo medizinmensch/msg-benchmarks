@@ -11,8 +11,8 @@
 #include <nanomsg/nn.h>
 #include <nanomsg/pubsub.h>
 
-#define SERVER "server"
-#define CLIENT "client"
+#define SUBSCRIBER "subscriber"
+#define PUBLISHER "publisher"
 #define DEBUG
 
 void fatal(const char *func)
@@ -55,8 +55,9 @@ char *rand_string_alloc(size_t size)
 	return s;
 }
 
-int send_msgs(const char *url, char *msg, int reps)
+int pub_client(const char *url, const char *client_name, char *msg, int reps)
 {
+	struct timespec start, end;
 	int sock;
 
 	if ((sock = nn_socket(AF_SP, NN_PUB)) < 0)
@@ -65,14 +66,14 @@ int send_msgs(const char *url, char *msg, int reps)
 	}
 	if (nn_bind(sock, url) < 0)
 	{
-		fatal("nn_bind");
+		fatal("[pub_client] nn_bind");
 	}
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	for (int request_nbr = 0; request_nbr != reps; request_nbr++)
 	{
-		char *msg = date();
-		printf("SERVER: PUBLISHING DATE %s\n", d);
+		char *msg = "123456";
+		printf("SERVER: PUBLISHING MSG\n");
 		int bytes = nn_send(sock, msg, strlen(msg) + 1, 0);
 		if (bytes < 0)
 		{
@@ -82,11 +83,11 @@ int send_msgs(const char *url, char *msg, int reps)
 	}
 	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 	uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-	
+
 	printf("%" PRIu64 "\n", delta_us);
 }
 
-int client(const char *url, const char *name)
+int sub_client(const char *url, const char *client_name)
 {
 	int sock;
 
@@ -112,12 +113,12 @@ int client(const char *url, const char *name)
 		{
 			fatal("nn_recv");
 		}
-		printf("CLIENT (%s): RECEIVED %s\n", name, buf);
+		printf("SUB (%s): RECEIVED %s\n", client_name, buf);
 		nn_freemsg(buf);
 	}
 }
 
-int bench_nanomsg(int reps, const char *conn, int exp)
+int bench_pub_client(const char *conn, const char *client_name, int reps, int exp)
 {
 	printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
 	char *msg;
@@ -126,28 +127,38 @@ int bench_nanomsg(int reps, const char *conn, int exp)
 		double size = pow(10, i);
 		printf("%d,%.0f,%s,", reps, size, conn);
 		msg = rand_string_alloc(size + 1);
-		send_msgs(conn, msg, reps);
+		pub_client(conn, client_name, msg, reps);
 	}
 	return (0);
 }
 
 int main(const int argc, const char **argv)
 {
-	int exp = 7;
+
+	int max_msg_power = 7; // 1=[10], 2=[10,100] 3=[10,100,1000]...
 	int reps = 10000;
 
 #ifdef DEBUG
-	exp = 2;
+	max_msg_power = 2;
 	reps = 2;
 #endif
 
-	if ((argc >= 2) && (strcmp(SERVER, argv[1]) == 0))
-		return (server(reps, argv[2]), exp);
+	if (argc != 4)
+	{
+		fprintf(stderr, "Incorrect usage. Supply 3 arguments: '[%s/%s] [connection string] [client name]'\n",
+				SUBSCRIBER, PUBLISHER);
+	}
+	else
+	{
+		const char *uri = argv[2];
+		const char *client_name = argv[3];
 
-	if ((argc >= 3) && (strcmp(CLIENT, argv[1]) == 0))
-		return (client(argv[2], argv[3]));
+		if (strcmp(SUBSCRIBER, argv[1]) == 0)
+			return (sub_client(uri, client_name));
 
-	fprintf(stderr, "Usage: pubsub %s|%s <URL> <ARG> ...\n",
-		SERVER, CLIENT);
+		if (strcmp(PUBLISHER, argv[1]) == 0)
+			return (bench_pub_client(uri, client_name, reps, max_msg_power));
+	}
+
 	return 1;
 }
