@@ -1,39 +1,40 @@
-// #include <stdio.h>
-// #include <string.h>
-// #include <stdlib.h>
-// #include <math.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <math.h>
+#include <stdlib.h>
+
+#include <string.h>
+#include <inttypes.h>
 // #include <sys/time.h>
 // #include <sys/resource.h>
-// #include <inttypes.h>
 
-#include <czmq.h>
 #include "zhelpers.h"
 // old
-int send_msgs(char *send_str, int reps, char *conn, bool debug)
-{
-    struct timespec start, end;
+// int send_msgs(char *send_str, int reps, char *conn, bool debug)
+// {
+//     struct timespec start, end;
 
-    zsock_t *requester = zsock_new(ZMQ_REQ);
-    zsock_connect(requester, conn);
+//     zsock_t *requester = zsock_new(ZMQ_REQ);
+//     zsock_connect(requester, conn);
 
-    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-    for (int request_nbr = 0; request_nbr != reps; request_nbr++)
-    {
-        zstr_send(requester, send_str); // Sending msg request_nbr/reps
-        char *str = zstr_recv(requester);
-        zstr_free(&str);
-    }
-    clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+//     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+//     for (int request_nbr = 0; request_nbr != reps; request_nbr++)
+//     {
+//         zstr_send(requester, send_str); // Sending msg request_nbr/reps
+//         char *str = zstr_recv(requester);
+//         zstr_free(&str);
+//     }
+//     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 
-    uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-    printf("%" PRIu64 "\n", delta_us);
+//     uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
+//     printf("%" PRIu64 "\n", delta_us);
 
-    zsock_destroy(&requester);
-    return 0;
-}
+//     zsock_destroy(&requester);
+//     return 0;
+// }
 
 // new
-int send_msg(char *send_str, int reps, char *conn)
+int _send_msgs(char *send_str, int reps, char *conn)
 {
     struct timespec start, end;
 
@@ -43,7 +44,7 @@ int send_msg(char *send_str, int reps, char *conn)
     zmq_connect(requester, "tcp://localhost:5559");
 
     int request_nbr;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+    // clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     for (request_nbr = 0; request_nbr != 10; request_nbr++)
     {
         s_send(requester, "Hello");
@@ -51,10 +52,10 @@ int send_msg(char *send_str, int reps, char *conn)
         printf("Received reply %d [%s]\n", request_nbr, string);
         free(string);
     }
-    clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+    // clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 
-    uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-    printf("%" PRIu64 "\n", delta_us);
+    // uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
+    // printf("%" PRIu64 "\n", delta_us);
 
     zmq_close(requester);
     zmq_ctx_destroy(context);
@@ -110,7 +111,7 @@ void bench_zmq(int reps, char *conn, bool debug)
         double size = pow(10, i);
         printf("%d,%.0f,%s,", reps, size, conn);
         str = rand_string_alloc(size + 1);
-        send_msgs(str, reps, conn, debug);
+        _send_msgs(str, reps, conn);
     }
 }
 
