@@ -15,9 +15,9 @@ gcc rrbroker.c -o ./dist/rrbroker -lzmq -lm
 
 
 
-./dist/rrclient 1 &
+./dist/rrclient "tcp://localhost:5559" "000001" &
 # ./dist/rrclient &
 # ./dist/rrclient &
 # ./dist/rrclient &
-./dist/rrworker &
-./dist/rrbroker
+./dist/rrworker "tcp://localhost:5560" &
+./dist/rrbroker "tcp://*:5559" "tcp://*:5560"

@@ -10,23 +10,22 @@
 
 #include "zhelpers.h"
 
-// new
-int _send_msgs(char *send_str, int reps, char *conn)
+int _send_msgs(char *send_str, int reps, char *conn, char *client)
 {
     struct timespec start, end;
 
     void *context = zmq_ctx_new();
     //  Socket to talk to server
     void *requester = zmq_socket(context, ZMQ_REQ);
-    zmq_connect(requester, "tcp://localhost:5559");
+    zmq_connect(requester, conn);
 
     int request_nbr;
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     for (request_nbr = 0; request_nbr != 10; request_nbr++)
     {
-        s_send(requester, "Hello");
+        s_send(requester, client);
         char *string = s_recv(requester);
-        printf("Received reply %d [%s]\n", request_nbr, string);
+        // printf("Received reply %d [%s]\n", request_nbr, string);
         free(string);
     }
     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
@@ -79,25 +78,26 @@ char *rand_string_alloc(size_t size)
 //     return 0;
 // }
 
-void bench_zmq(int reps, char *conn, bool debug)
+void bench_zmq(int reps, char *conn, char *client)
 {
     printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
     char *str;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 1; i++)
     {
         double size = pow(10, i);
         printf("%d,%.0f,%s,", reps, size, conn);
         str = rand_string_alloc(size + 1);
-        _send_msgs(str, reps, conn);
+        _send_msgs(str, reps, conn, client);
     }
 }
 
 int main(int argc, char *argv[])
 {
     char *conn = argv[1];
-    printf("%s\n", conn);
+    char *client_id = argv[2];
+    // printf("%s\n", conn);
 
-    bench_zmq(10000, conn, false);
+    bench_zmq(10000, conn, client_id);
 
     // signal_close(conn);
 
