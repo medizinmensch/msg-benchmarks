@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         int c = 0;
         while (c < 6)
         {
-            client[c] = string[c];
+            client[c] = string;
             c++;
         }
         client[6] = '\0';
