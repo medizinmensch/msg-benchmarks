@@ -10,7 +10,7 @@
 
 #include "zhelpers.h"
 
-int _send_msgs(char *send_str, int reps, char *conn, char *client)
+int _send_msgs(char *msg, int reps, char *conn, char *client)
 {
     struct timespec start, end;
 
@@ -21,9 +21,10 @@ int _send_msgs(char *send_str, int reps, char *conn, char *client)
 
     int request_nbr;
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-    for (request_nbr = 0; request_nbr != 10; request_nbr++)
+    for (request_nbr = 0; request_nbr != reps; request_nbr++)
     {
-        s_send(requester, client);
+        // printf("Try sending [%s]\n", msg);
+        s_send(requester, msg);
         char *string = s_recv(requester);
         // printf("Received reply %d [%s]\n", request_nbr, string);
         free(string);
@@ -31,7 +32,7 @@ int _send_msgs(char *send_str, int reps, char *conn, char *client)
     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 
     uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-    printf("%" PRIu64 "\n", delta_us);
+    // printf("%" PRIu64 "\n", delta_us);
 
     zmq_close(requester);
     zmq_ctx_destroy(context);
@@ -64,6 +65,20 @@ char *rand_string_alloc(size_t size)
     return s;
 }
 
+char *build_msg(size_t size, char *client_id)
+{
+    char *msg = rand_string_alloc(size);
+    size_t s = sizeof(client_id);
+    for (int i = 0; i < s - 2; i++)
+    {
+        msg[i] = client_id[i];
+    }
+
+    msg[s - 2] = ';';
+
+    return msg;
+}
+
 // -----------------------------------------------------------
 
 // int signal_close(char *conn)
@@ -78,16 +93,19 @@ char *rand_string_alloc(size_t size)
 //     return 0;
 // }
 
-void bench_zmq(int reps, char *conn, char *client)
+void bench_zmq(int repetitions, char *connection, char *client_id)
 {
     printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
-    char *str;
-    for (int i = 0; i < 1; i++)
+    char *msg;
+    for (int i = 1; i < 7; i++)
     {
-        double size = pow(10, i);
-        printf("%d,%.0f,%s,", reps, size, conn);
-        str = rand_string_alloc(size + 1);
-        _send_msgs(str, reps, conn, client);
+        double msg_size = pow(10, i);
+        printf("%d,%.0f,%s,", repetitions, msg_size, connection);
+
+        msg = build_msg(msg_size + 1, client_id);
+        _send_msgs(msg, repetitions, connection, client_id);
+        // infinity loop
+        // i--;
     }
 }
 
@@ -97,10 +115,9 @@ int main(int argc, char *argv[])
     char *client_id = argv[2];
     // printf("%s\n", conn);
 
-    bench_zmq(10000, conn, client_id);
+    bench_zmq(100000, conn, client_id);
 
     // signal_close(conn);
 
     return 0;
 }
-
