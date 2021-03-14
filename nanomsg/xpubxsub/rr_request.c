@@ -48,7 +48,6 @@ void fatal(const char *func)
 
 int send_msgs(char *msg, int reps, const char *url)
 {
-
         struct timespec start, end;
         char *buf = NULL;
         int bytes = -1;
@@ -100,7 +99,9 @@ int send_msgs(char *msg, int reps, const char *url)
         clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 
         uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-        printf("%" PRIu64 "\n", delta_us);
+#ifdef DEBUG
+        printf("took: %" PRIu64 "s\n", delta_us);
+#endif
 
         return (nn_shutdown(sock, 0));
 }
@@ -113,8 +114,8 @@ int bench_nanomsg(int reps, const char *conn, int exp)
         {
                 double size = pow(10, i);
                 printf("%d,%.0f,%s,", reps, size, conn);
-                // msg = rand_string_alloc(size + 1);
-                send_msgs("Hello World", reps, conn);
+                msg = rand_string_alloc(size + 1);
+                send_msgs(msg, reps, conn);
         }
         return (0);
 }
@@ -126,8 +127,8 @@ int main(const int argc, const char **argv)
         const char *connection_string = argv[1];
 
 #ifdef DEBUG
-        exp = 1;
-        reps = 1;
+        exp = 3;
+        reps = 10;
         printf("rr_request: Connection string: %s\n", connection_string);
 #endif
 
