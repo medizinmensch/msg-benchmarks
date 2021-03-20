@@ -3,10 +3,10 @@
 #include <time.h>
 #include <sys/resource.h>
 
-#include "zhelpers.h"
-#include "helpers.h"
+#include "../helpers/helpers.h"
+#include "../helpers/zhelpers.h"
 
-#define czmq
+// #define czmq
 // #define nanomsg
 
 int send_msgs_czmq(char *msg, int reps, char *conn, int client)
@@ -38,7 +38,7 @@ int send_msgs_czmq(char *msg, int reps, char *conn, int client)
     return 0;
 }
 
-void bench_zmq(int repetitions, char *connection, int client_id)
+void bench(int repetitions, char *connection, int client_id)
 {
     // printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
     char *msg;
@@ -68,6 +68,11 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-    printf(build_msg(500, 44567));
+    char* url = argv[1];
+    int client_id = atoi(argv[2]);
+
+    bench(10000, url, client_id);
+
+    printf(build_msg(500, client_id));
     return 0;
 }

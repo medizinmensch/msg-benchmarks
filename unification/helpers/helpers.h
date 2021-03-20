@@ -34,12 +34,12 @@ char *rand_string_alloc(size_t size)
     }
     return s;
 }
-
 char *build_msg(size_t msg_size, int client_id)
 {
     char *msg = rand_string_alloc(msg_size);
 
     int client_str_size = 8;
+    // 0000000
     char client_str[client_str_size];
 
     snprintf(client_str, client_str_size, "%007d", client_id); // save with leading zeros
@@ -59,4 +59,10 @@ uint64_t get_time_past(struct timespec start, struct timespec end)
 {
     // return ((end_sec - start_sec) * 1000000 + (end_ns - start_ns) / 1000);
     return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
+}
+
+
+uint64_t get_kibips(int bytes_recieved, uint64_t delta_us )
+{
+    return ((float)bytes_recieved / 1024) / ((float)delta_us / 1000000000);
 }
