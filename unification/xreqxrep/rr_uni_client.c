@@ -38,14 +38,16 @@ int send_msgs_czmq(char *msg, int reps, char *conn, int client)
     return 0;
 }
 
-void bench(int repetitions, char *connection, int client_id)
+void benchmark(int repetitions, char *connection, int client_id)
 {
     // printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
     char *msg;
     for (int i = 1; i < 8; i++)
     {
+
         double msg_size = pow(10, i);
-        // printf("%d,%.0f,%s,", repetitions, msg_size, connection);
+        printf("Msg size: %.0f,", msg_size);
+        
 
         msg = build_msg(msg_size + 1, client_id);
 #ifdef czmq
@@ -71,8 +73,8 @@ int main(int argc, char *argv[])
     char* url = argv[1];
     int client_id = atoi(argv[2]);
 
-    bench(10000, url, client_id);
+    benchmark(5000, url, client_id);
 
-    printf(build_msg(500, client_id));
+    // printf(build_msg(500, client_id));
     return 0;
 }
