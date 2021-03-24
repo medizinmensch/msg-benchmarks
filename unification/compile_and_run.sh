@@ -31,6 +31,7 @@ check_arguments $1 $2 $3
 frontend=$1
 backend=$2
 clients=$3
+exp_power=12
 repetitons=5000
 printf "Frontent: $frontend\nBackend: $backend\nStarting $clients client(s): "
 
@@ -39,7 +40,7 @@ printf "Frontent: $frontend\nBackend: $backend\nStarting $clients client(s): "
 for (( i=1; i<=$clients; i++ ))
 do
     printf "$i "
-    ./dist/rr_uni_client $frontend $i &
+    ./dist/rr_uni_client $frontend $i $exp_power $clients &
 done
 printf "\n"
 

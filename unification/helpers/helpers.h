@@ -39,7 +39,7 @@ char *build_msg(int exp_size, int client_id, int repetitions, int client_count)
 {
     char header[61]; // len(str(2**64)*3) + 1
 
-    int msg_size = pow(10, exp_size);
+    int msg_size = pow(4, exp_size);
     char *msg = rand_string_alloc(msg_size);
 
     snprintf(header, sizeof(header), "%s;%i;%i;%i;%i;", "G", client_id, msg_size, repetitions, client_count); // client_id,msg_size,repetitions

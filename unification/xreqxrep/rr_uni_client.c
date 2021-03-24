@@ -38,12 +38,11 @@ int send_msgs_czmq(char *msg, int reps, char *conn, int client)
     return 0;
 }
 
-void benchmark(int repetitions, char *connection, int client_id)
+void benchmark(int exp_power, int repetitions, char *connection, int client_id, int client_count)
 {
     // printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
-    int client_count = 123;
 
-    for (int i = 2; i < 7; i++)
+    for (int i = 2; i < exp_power; i++)
     {
         char *msg = build_msg(i, client_id, repetitions, client_count);
 
@@ -70,8 +69,10 @@ int main(int argc, char *argv[])
 
     char *url = argv[1];
     int client_id = atoi(argv[2]);
+    int exp_power = atoi(argv[3]);
+    int client_count = atoi(argv[4]);
 
-    benchmark(5000, url, client_id);
+    benchmark(exp_power, 5000, url, client_id, client_count);
 
     return 0;
 }
