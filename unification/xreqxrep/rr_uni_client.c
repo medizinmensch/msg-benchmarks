@@ -43,7 +43,7 @@ void benchmark(int repetitions, char *connection, int client_id)
     // printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
     int client_count = 123;
 
-    for (int i = 2; i < 4; i++)
+    for (int i = 2; i < 7; i++)
     {
         char *msg = build_msg(i, client_id, repetitions, client_count);
 

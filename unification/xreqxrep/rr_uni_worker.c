@@ -6,16 +6,66 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-// #define czmq
+#define czmq
 // #define nanomsg
+
+uint64_t exchange_data(void *responder)
+{
+    uint64_t bytes_recieved = 0;
+    char delimiter[] = ";";
+    size_t max_header_size = 500;
+    char header[max_header_size];
+
+#ifdef czmq
+    char *msg_received = s_recv(responder);
+#endif
+
+    strncpy(header, msg_received, max_header_size);
+    // printf("RAW: %s\n", header);
+
+    // we must declare these variables exactly in this sequence
+    // "G", client_id, msg_size, repetitions, client_count
+    char *tag = strtok(header, delimiter);
+    int client_id = atoi(strtok(NULL, delimiter));
+    int msg_size = atoi(strtok(NULL, delimiter));
+    int repetitions = atoi(strtok(NULL, delimiter));
+    int client_count = atoi(strtok(NULL, delimiter));
+    // printf("Tag: <%s>,  client_id: <%i>, msg_size: <%i>, repetitions: <%i>, client_count: <%i>\n", "G", client_id, msg_size, repetitions, client_count);
+
+#ifdef czmq
+    s_send(responder, header);
+#endif
+
+    // int repetitions = 500;
+    // char *client_id = "123";
+
+    for (int i = 0; i < (repetitions/10); i++)
+    {
+        //  Wait for next request from client
+#ifdef czmq
+        // printf("a");
+        char *string = s_recv(responder);
+#endif
+#ifdef nanomsg
+        char *string = ; // TODO
+#endif
+        // printf(string);
+
+        bytes_recieved = bytes_recieved + strlen(string);
+
+#ifdef czmq
+        s_send(responder, header);
+#endif
+        free(string);
+    }
+    return bytes_recieved;
+}
 
 int main(int argc, char *argv[])
 {
     char *connection_string = argv[1];
-    int max_client_id_digits = 8;
     struct timespec start, end;
     uint64_t bytes_recieved = 0;
-    char delim[] = ";";
 
 #ifndef czmq
 #ifndef nanomsg
@@ -34,46 +84,9 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     while (1)
     {
-        bytes_recieved = 0;
         clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
-        // #ifdef czmq
-        //         char *payload = s_recv(responder);
-        // #endif
-        //         printf(payload);
-
-        //         char *ptr = strtok(payload, delim);
-
-        //         // we must declare these variables exactly in this sequence
-        //         char *tag = strtok(NULL, delim);
-        //         printf(tag);
-        //         char *client_id = strtok(NULL, delim);
-        //         printf(client_id);
-        //         int msg_size = atoi(strtok(NULL, delim));
-        //         int repetitions = atoi(strtok(NULL, delim));
-        //         int client_count = atoi(strtok(NULL, delim));
-
-        int repetitions = 500;
-        char *client_id = "123";
-
-        for (int i = 0; i < repetitions; i++)
-        {
-            //  Wait for next request from client
-#ifdef czmq
-            char *string = s_recv(responder);
-#endif
-#ifdef nanomsg
-            char *string = ; // TODO
-#endif
-            // printf(string);
-
-            bytes_recieved = bytes_recieved + strlen(string);
-
-#ifdef czmq
-            s_send(responder, client_id);
-#endif
-            free(string);
-        }
+        bytes_recieved = exchange_data(responder);
 
         // struct timespec tmp = end;
         clock_gettime(CLOCK_MONOTONIC_RAW, &end);

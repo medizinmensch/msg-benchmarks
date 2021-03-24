@@ -42,11 +42,11 @@ char *build_msg(int exp_size, int client_id, int repetitions, int client_count)
     int msg_size = pow(10, exp_size);
     char *msg = rand_string_alloc(msg_size);
 
-    snprintf(header, sizeof(header), "G;%i;%i;%i;%i;", client_id, msg_size, repetitions, client_count); // client_id,msg_size,repetitions
+    snprintf(header, sizeof(header), "%s;%i;%i;%i;%i;", "G", client_id, msg_size, repetitions, client_count); // client_id,msg_size,repetitions
     for (int i = 0; i < strlen(header); i++)
         msg[i] = header[i];
 
-    printf("Msg to send: %s\n", msg);
+    printf("Header to send: %s\n", header);
 
     return msg;
 }
