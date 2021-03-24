@@ -12,7 +12,6 @@
 int send_msgs_czmq(char *msg, int reps, char *conn, int client)
 {
     struct timespec start, end;
-
     void *context = zmq_ctx_new();
     void *requester = zmq_socket(context, ZMQ_REQ);
     zmq_connect(requester, conn);
@@ -24,11 +23,12 @@ int send_msgs_czmq(char *msg, int reps, char *conn, int client)
         // printf("Try sending [%s]\n", msg);
         s_send(requester, msg);
         char *msg_recvd = s_recv(requester);
-        // printf("Received reply %d [%s]\n", request_nbr, msg_recvd);
-        free(msg_recvd);
+        if (msg_recvd == "STOP_PLS")
+            // printf("Received reply %d [%s]\n", request_nbr, msg_recvd);
+            free(msg_recvd);
     }
     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-    uint64_t delta_us = get_time_past(start, end);
+    uint64_t delta_us = get_us_past(start, end);
 
     // uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
     // printf("%" PRIu64 "\n", delta_us);
@@ -41,18 +41,16 @@ int send_msgs_czmq(char *msg, int reps, char *conn, int client)
 void benchmark(int repetitions, char *connection, int client_id)
 {
     // printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
-    char *msg;
-    for (int i = 1; i < 8; i++)
+    int client_count = 123;
+
+    for (int i = 2; i < 4; i++)
     {
+        char *msg = build_msg(i, client_id, repetitions, client_count);
 
-        double msg_size = pow(10, i);
-        printf("Msg size: %.0f,", msg_size);
-        
-
-        msg = build_msg(msg_size + 1, client_id);
 #ifdef czmq
-        send_msgs_czmq(msg, repetitions, connection, client_id);
+        send_msgs_czmq(msg, repetitions, connection, client_id); // send header for metadata
 #endif
+
 #ifdef nanomsg
         send_msgs_nanomsg(msg, repetitions, connection, client_id);
 #endif
@@ -70,11 +68,10 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-    char* url = argv[1];
+    char *url = argv[1];
     int client_id = atoi(argv[2]);
 
     benchmark(5000, url, client_id);
 
-    // printf(build_msg(500, client_id));
     return 0;
 }

@@ -14,7 +14,8 @@ int main(int argc, char *argv[])
     char *connection_string = argv[1];
     int max_client_id_digits = 8;
     struct timespec start, end;
-    int reps = 5000;
+    uint64_t bytes_recieved = 0;
+    char delim[] = ";";
 
 #ifndef czmq
 #ifndef nanomsg
@@ -29,44 +30,63 @@ int main(int argc, char *argv[])
     zmq_connect(responder, connection_string);
 #endif
 
-    printf("\nThroughput in KiBi/second\n");
+    printf("\nThroughput in KiBi/second; bytes received; delta_us\n");
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     while (1)
     {
-        int bytes_recieved = 0;
+        bytes_recieved = 0;
         clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
-        for (int i = 0; i < reps; i++)
+        // #ifdef czmq
+        //         char *payload = s_recv(responder);
+        // #endif
+        //         printf(payload);
+
+        //         char *ptr = strtok(payload, delim);
+
+        //         // we must declare these variables exactly in this sequence
+        //         char *tag = strtok(NULL, delim);
+        //         printf(tag);
+        //         char *client_id = strtok(NULL, delim);
+        //         printf(client_id);
+        //         int msg_size = atoi(strtok(NULL, delim));
+        //         int repetitions = atoi(strtok(NULL, delim));
+        //         int client_count = atoi(strtok(NULL, delim));
+
+        int repetitions = 500;
+        char *client_id = "123";
+
+        for (int i = 0; i < repetitions; i++)
         {
             //  Wait for next request from client
 #ifdef czmq
             char *string = s_recv(responder);
 #endif
-            char client[max_client_id_digits + 1];
-
-            for (int c = 0; c < max_client_id_digits; c++)
-            {
-                client[c] = string[c];
-            }
-            client[max_client_id_digits] = '\0';
+#ifdef nanomsg
+            char *string = ; // TODO
+#endif
+            // printf(string);
 
             bytes_recieved = bytes_recieved + strlen(string);
 
 #ifdef czmq
-            s_send(responder, client);
+            s_send(responder, client_id);
 #endif
             free(string);
         }
 
+        // struct timespec tmp = end;
         clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-        uint64_t delta_us = get_time_past(start, end);
-        // printf("%" PRIu64, delta_us); //724066
-        double kibips = get_kibips(bytes_recieved, delta_us) ;
-
-        printf("%.2f\n", kibips);
-        bytes_recieved = 0;
+        uint64_t delta_us = get_us_past(start, end);
+        double kibips = get_kibips(bytes_recieved, delta_us);
+        printf("%.6f, %llu, %llu\n", kibips, bytes_recieved, delta_us);
     }
+    // }
     //  We never get here, but clean up anyhow
+
+#ifdef czmq
     zmq_close(responder);
     zmq_ctx_destroy(context);
+#endif
     return 0;
 }

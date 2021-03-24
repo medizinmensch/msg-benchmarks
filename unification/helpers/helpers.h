@@ -34,35 +34,30 @@ char *rand_string_alloc(size_t size)
     }
     return s;
 }
-char *build_msg(size_t msg_size, int client_id)
+
+char *build_msg(int exp_size, int client_id, int repetitions, int client_count)
 {
+    char header[61]; // len(str(2**64)*3) + 1
+
+    int msg_size = pow(10, exp_size);
     char *msg = rand_string_alloc(msg_size);
 
-    int client_str_size = 8;
-    // 0000000
-    char client_str[client_str_size];
+    snprintf(header, sizeof(header), "G;%i;%i;%i;%i;", client_id, msg_size, repetitions, client_count); // client_id,msg_size,repetitions
+    for (int i = 0; i < strlen(header); i++)
+        msg[i] = header[i];
 
-    snprintf(client_str, client_str_size, "%007d", client_id); // save with leading zeros
-
-    for (int i = 0; i < client_str_size - 1; i++)
-    {
-        msg[i] = client_str[i];
-    }
-
-    msg[client_str_size - 1] = ';';
+    printf("Msg to send: %s\n", msg);
 
     return msg;
 }
 
-// uint64_t get_time_past(start_sec, start_ns, end_sec, end_ns)
-uint64_t get_time_past(struct timespec start, struct timespec end)
+// return ns?
+uint64_t get_us_past(struct timespec start, struct timespec end)
 {
-    // return ((end_sec - start_sec) * 1000000 + (end_ns - start_ns) / 1000);
-    return (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
+    return ((end.tv_sec - start.tv_sec) * 1000000) + ((end.tv_nsec - start.tv_nsec) / 1000);
 }
 
-
-uint64_t get_kibips(int bytes_recieved, uint64_t delta_us )
+double get_kibips(int bytes_recieved, uint64_t delta_us)
 {
-    return ((float)bytes_recieved / 1024) / ((float)delta_us / 1000000000);
+    return ((double)bytes_recieved / 1024) / ((double)delta_us / 1000);
 }
