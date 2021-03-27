@@ -26,7 +26,7 @@ check_arguments $#
 frontend=$1
 backend=$2
 clients=$3
-exp_power=12
+exp_power=22
 repetitons=5000
 
 printf "Frontent: $frontend\n"
@@ -47,6 +47,6 @@ printf "\n"
 
 
 ## Start worker and proxy
-./dist/rr_uni_worker $backend &
+./dist/rr_uni_worker $backend $clients &
 ./dist/rr_zmq_broker "tcp://*:5559" "tcp://*:5560"
 

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 function compile {
+    mkdir -p dist
     printf "Compiling."
     gcc ./xreqxrep/rr_uni_client.c -o ./dist/rr_uni_client -lzmq -lm -Dczmq
     printf "."
@@ -19,5 +20,6 @@ trap cleanup INT
 
 
 # MAIN
+
 compile
 

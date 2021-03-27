@@ -53,8 +53,6 @@ void benchmark(int exp_power, int repetitions, char *connection, int client_id, 
 #ifdef nanomsg
         send_msgs_nanomsg(msg, repetitions, connection, client_id);
 #endif
-
-        // i--; // infinity loop
     }
 }
 

@@ -30,7 +30,8 @@ uint64_t exchange_data(void *responder)
     int msg_size = atoi(strtok(NULL, delimiter));
     int repetitions = atoi(strtok(NULL, delimiter));
     int client_count = atoi(strtok(NULL, delimiter));
-    // printf("Tag: <%s>,  client_id: <%i>, msg_size: <%i>, repetitions: <%i>, client_count: <%i>\n", "G", client_id, msg_size, repetitions, client_count);
+    repetitions = repetitions * client_count;
+    printf("%s;%i;%i;%i;%i;", "G", client_id, msg_size, repetitions, client_count);
 
 #ifdef czmq
     s_send(responder, header);
@@ -39,7 +40,7 @@ uint64_t exchange_data(void *responder)
     // int repetitions = 500;
     // char *client_id = "123";
 
-    for (int i = 0; i < (repetitions/10); i++)
+    for (int i = 0; i < (repetitions / 10); i++)
     {
         //  Wait for next request from client
 #ifdef czmq
@@ -64,6 +65,7 @@ uint64_t exchange_data(void *responder)
 int main(int argc, char *argv[])
 {
     char *connection_string = argv[1];
+    int clients_count = atoi(argv[2]);
     struct timespec start, end;
     uint64_t bytes_recieved = 0;
 
@@ -80,7 +82,7 @@ int main(int argc, char *argv[])
     zmq_connect(responder, connection_string);
 #endif
 
-    printf("\nThroughput in KiBi/second; bytes received; delta_us\n");
+    printf("\nTag;client_id;msg_size;repetitions;client_count;Throughput_in_KiBi/second;bytes_received;delta_us;\n");
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     while (1)
     {
@@ -92,7 +94,7 @@ int main(int argc, char *argv[])
         clock_gettime(CLOCK_MONOTONIC_RAW, &end);
         uint64_t delta_us = get_us_past(start, end);
         double kibips = get_kibips(bytes_recieved, delta_us);
-        printf("%.6f, %llu, %llu\n", kibips, bytes_recieved, delta_us);
+        printf("%.6f;%llu;%llu\n", kibips, bytes_recieved, delta_us);
     }
     // }
     //  We never get here, but clean up anyhow
