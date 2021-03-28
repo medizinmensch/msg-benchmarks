@@ -58,7 +58,7 @@ uint64_t exchange_data(void *responder, int *exit_msgs, int *response_code)
         free(string);
     }
 
-    if ((msg_parts - 2) < *exit_msgs)
+    if ((msg_parts - 3) < *exit_msgs)
         *response_code = 1;
 
     return bytes_recieved;
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
     zmq_close(responder);
     zmq_ctx_destroy(context);
 #endif
-    printf("Exiting\n");
+    printf("Done\n");
     exit(0);
     return 0;
 }

@@ -42,13 +42,12 @@ int send_msgs_czmq(char *msg, int reps, char *conn)
 
 void benchmark(char *url, int client_count, int client_id, int max_exp, int repetitions)
 {
-    printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
+    // printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
 
     char *tag = "G";
-    int start = 2;
-    for (int i = start; i < max_exp + start; i++)
+    for (int i = 2; i < max_exp; i++)
     {
-        if (i == max_exp - 1 + start)
+        if (i == max_exp - 1)
             tag = "E";
         char *msg = build_msg(i, client_id, repetitions, client_count, tag);
 
@@ -76,6 +75,12 @@ int main(int argc, char *argv[])
     int max_exp = atoi(argv[3]);
     int client_count = atoi(argv[4]);
     int repetitions = 5000;
+
+    if (max_exp < 4)
+    {
+        printf("max_exp must be at least 4");
+        exit(1);
+    }
 
     benchmark(url, client_count, client_id, max_exp, repetitions);
 
