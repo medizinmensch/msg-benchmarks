@@ -35,14 +35,14 @@ char *rand_string_alloc(size_t size)
     return s;
 }
 
-char *build_msg(int exp_size, int client_id, int repetitions, int client_count)
+char *build_msg(int exp_size, int client_id, int repetitions, int client_count, char *tag)
 {
     char header[61]; // len(str(2**64)*3) + 1
-
-    int msg_size = pow(2, exp_size);
+    int base = 2;
+    int msg_size = pow(base, exp_size);
     char *msg = rand_string_alloc(msg_size);
 
-    snprintf(header, sizeof(header), "%s;%i;%i;%i;%i;", "G", client_id, msg_size, repetitions, client_count); // client_id,msg_size,repetitions
+    snprintf(header, sizeof(header), "%s;%i;%i;%i;%i;", tag, client_id, msg_size, repetitions, client_count); // client_id,msg_size,repetitions
     for (int i = 0; i < strlen(header); i++)
         msg[i] = header[i];
 

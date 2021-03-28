@@ -9,7 +9,9 @@
 // #define czmq
 // #define nanomsg
 
-int send_msgs_czmq(char *msg, int reps, char *conn, int client)
+// TODO: implement cleanup in case of early termination
+
+int send_msgs_czmq(char *msg, int reps, char *conn)
 {
     struct timespec start, end;
     void *context = zmq_ctx_new();
@@ -38,20 +40,24 @@ int send_msgs_czmq(char *msg, int reps, char *conn, int client)
     return 0;
 }
 
-void benchmark(int exp_power, int repetitions, char *connection, int client_id, int client_count)
+void benchmark(char *url, int client_count, int client_id, int max_exp, int repetitions)
 {
-    // printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
+    printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
 
-    for (int i = 2; i < exp_power; i++)
+    char *tag = "G";
+    int start = 2;
+    for (int i = start; i < max_exp + start; i++)
     {
-        char *msg = build_msg(i, client_id, repetitions, client_count);
+        if (i == max_exp - 1 + start)
+            tag = "E";
+        char *msg = build_msg(i, client_id, repetitions, client_count, tag);
 
 #ifdef czmq
-        send_msgs_czmq(msg, repetitions, connection, client_id); // send header for metadata
+        send_msgs_czmq(msg, repetitions, url); // send header for metadata
 #endif
 
 #ifdef nanomsg
-        send_msgs_nanomsg(msg, repetitions, connection, client_id);
+        send_msgs_nanomsg(msg, repetitions, url, client_id);
 #endif
     }
 }
@@ -67,10 +73,11 @@ int main(int argc, char *argv[])
 
     char *url = argv[1];
     int client_id = atoi(argv[2]);
-    int exp_power = atoi(argv[3]);
+    int max_exp = atoi(argv[3]);
     int client_count = atoi(argv[4]);
+    int repetitions = 5000;
 
-    benchmark(exp_power, 5000, url, client_id, client_count);
+    benchmark(url, client_count, client_id, max_exp, repetitions);
 
     return 0;
 }

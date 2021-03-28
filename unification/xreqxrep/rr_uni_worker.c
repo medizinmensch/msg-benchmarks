@@ -9,12 +9,13 @@
 #define czmq
 // #define nanomsg
 
-uint64_t exchange_data(void *responder)
+uint64_t exchange_data(void *responder, int *exit_msgs, int *response_code)
 {
     uint64_t bytes_recieved = 0;
     char delimiter[] = ";";
     size_t max_header_size = 500;
     char header[max_header_size];
+    int msg_parts = 10; // determines in how many parts we split the incoming msgs; higher means more data points but also more inacurate
 
 #ifdef czmq
     char *msg_received = s_recv(responder);
@@ -24,33 +25,30 @@ uint64_t exchange_data(void *responder)
     // printf("RAW: %s\n", header);
 
     // we must declare these variables exactly in this sequence
-    // "G", client_id, msg_size, repetitions, client_count
     char *tag = strtok(header, delimiter);
     int client_id = atoi(strtok(NULL, delimiter));
     int msg_size = atoi(strtok(NULL, delimiter));
     int repetitions = atoi(strtok(NULL, delimiter));
     int client_count = atoi(strtok(NULL, delimiter));
     repetitions = repetitions * client_count;
-    printf("%s;%i;%i;%i;%i;", "G", client_id, msg_size, repetitions, client_count);
+    if (strcmp(tag, "E") == 0)
+        *exit_msgs += 1;
+
+    printf("%s;%i;%i;%i;%i;", tag, client_id, msg_size, repetitions, client_count);
 
 #ifdef czmq
     s_send(responder, header);
 #endif
 
-    // int repetitions = 500;
-    // char *client_id = "123";
-
     for (int i = 0; i < (repetitions / 10); i++)
     {
         //  Wait for next request from client
 #ifdef czmq
-        // printf("a");
         char *string = s_recv(responder);
 #endif
 #ifdef nanomsg
         char *string = ; // TODO
 #endif
-        // printf(string);
 
         bytes_recieved = bytes_recieved + strlen(string);
 
@@ -59,6 +57,10 @@ uint64_t exchange_data(void *responder)
 #endif
         free(string);
     }
+
+    if ((msg_parts - 2) < *exit_msgs)
+        *response_code = 1;
+
     return bytes_recieved;
 }
 
@@ -68,6 +70,8 @@ int main(int argc, char *argv[])
     int clients_count = atoi(argv[2]);
     struct timespec start, end;
     uint64_t bytes_recieved = 0;
+    int response_code = 0;
+    int exit_msgs = 0;
 
 #ifndef czmq
 #ifndef nanomsg
@@ -88,13 +92,15 @@ int main(int argc, char *argv[])
     {
         clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
-        bytes_recieved = exchange_data(responder);
+        bytes_recieved = exchange_data(responder, &exit_msgs, &response_code);
 
         // struct timespec tmp = end;
         clock_gettime(CLOCK_MONOTONIC_RAW, &end);
         uint64_t delta_us = get_us_past(start, end);
         double kibips = get_kibips(bytes_recieved, delta_us);
-        printf("%.6f;%llu;%llu\n", kibips, bytes_recieved, delta_us);
+        printf("%.5f;%llu;%llu\n", kibips, bytes_recieved, delta_us);
+        if (response_code == 1)
+            break;
     }
     // }
     //  We never get here, but clean up anyhow
@@ -103,5 +109,7 @@ int main(int argc, char *argv[])
     zmq_close(responder);
     zmq_ctx_destroy(context);
 #endif
+    printf("Exiting\n");
+    exit(0);
     return 0;
 }
