@@ -8,9 +8,9 @@ function compile {
 }
 
 function check_arguments () {
-    if [ "$1" -ne 4 ]; then
-        printf "You need to pass 4 arguments: frontend url, backend url, amount of clients and biggest exp increase of msg size (base is 2). Eg.: \n"
-        printf './run.sh "tcp://localhost:5559" "tcp://localhost:5560" 1 20\n'
+    if [ "$1" -ne 5 ]; then
+        printf "You need to pass 5 arguments: frontend url, backend url, amount of clients and biggest exp increase of msg size (base is 2) and target (czmq or nanomsg) Eg.: \n"
+        printf './run.sh "tcp://localhost:5559" "tcp://localhost:5560" 1 20 czmq\n'
         return 0 2>/dev/null || exit "0"
     fi
 }
@@ -27,6 +27,7 @@ frontend=$1
 backend=$2
 clients=$3
 max_exp=$4
+target=$5
 repetitons=5000
 
 printf "Frontent: $frontend\n"
@@ -47,7 +48,15 @@ printf "\n"
 
 
 ## Start worker and proxy
-./dist/rr_zmq_broker "tcp://*:5559" "tcp://*:5560" &
+if [[ "$target" = "czmq" ]]; then
+    ./dist/rr_zmq_broker "tcp://*:5559" "tcp://*:5560" &
+elif [[ "$target" = "nanomsg" ]]; then
+    ./dist/rr_nanomsg_broker "tcp://*:5559" "tcp://*:5560" &
+else
+    echo "Compile.sh: Target was set to <$target> which is not valid. Valid options are 'nanomsg' and 'czmq'"
+fi
+
+
 ./dist/rr_uni_worker $backend $clients
 
 printf "Cleanup?: "

@@ -14,10 +14,22 @@ function check_arguments () {
 check_arguments $#
 max_client_power=$1
 max_msg_size_power=$2
+
+target=nanomsg
 for (( i=0; i<=$max_client_power; i++ ))
 do
     clients=$((2 ** i))
     printf "Number of clients: $clients\n"
     sleep 1
-    ./run.sh "tcp://localhost:5559" "tcp://localhost:5560" $clients $max_msg_size_power
+    ./run.sh "tcp://localhost:5559" "tcp://localhost:5560" $clients $max_msg_size_power $target
 done
+
+
+# target=czmq
+# for (( i=0; i<=$max_client_power; i++ ))
+# do
+#     clients=$((2 ** i))
+#     printf "Number of clients: $clients\n"
+#     sleep 1
+#     ./run.sh "tcp://localhost:5559" "tcp://localhost:5560" $clients $max_msg_size_power $target
+# done

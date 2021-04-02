@@ -1,4 +1,6 @@
-#include "../helpers/zhelpers.h"
+// #define czmq
+// #define nanomsg
+
 #include "../helpers/helpers.h"
 
 #include <inttypes.h>
@@ -6,8 +8,22 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-// #define czmq
-#define nanomsg
+#ifdef czmq
+#include "../helpers/zhelpers.h"
+#endif
+
+#ifdef nanomsg
+#include <nanomsg/nn.h>
+#include <nanomsg/reqrep.h>
+#endif
+
+#ifdef nanomsg
+void fatal(const char *func)
+{
+    fprintf(stderr, "%s: %s\n", func, nn_strerror(nn_errno()));
+    exit(1);
+}
+#endif
 
 char *uni_receive(void *responder, int file_descr)
 {
@@ -30,6 +46,7 @@ void uni_send(void *responder, int file_descr, char *msg)
     s_send(responder, msg);
 #endif
 #ifdef nanomsg
+    int bytes;
     if ((bytes = nn_send(file_descr, msg, strlen(msg) + 1, 0)) < 0)
         fatal("nn_send");
 #endif
@@ -100,7 +117,7 @@ int main(int argc, char *argv[])
     int exit_msgs = 0;
 
     void *responder = NULL; // czmq
-    int file_descr = NULL;  // nanomsg
+    int file_descr = 0;     // nanomsg
 
 #ifndef czmq
 #ifndef nanomsg

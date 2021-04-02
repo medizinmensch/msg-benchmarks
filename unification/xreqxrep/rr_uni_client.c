@@ -1,6 +1,7 @@
 // #define czmq
-#define nanomsg
+// #define nanomsg
 
+#include <unistd.h> //?
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
@@ -18,6 +19,7 @@
 #endif
 
 // TODO: implement cleanup in case of early termination
+#ifdef czmq
 int send_msgs_czmq(char *msg, int reps, char *conn)
 {
     struct timespec start, end;
@@ -44,6 +46,15 @@ int send_msgs_czmq(char *msg, int reps, char *conn)
     zmq_close(requester);
     zmq_ctx_destroy(context);
     return 0;
+}
+#endif
+
+#ifdef nanomsg
+
+void fatal(const char *func)
+{
+        fprintf(stderr, "%s: %s\n", func, nn_strerror(nn_errno()));
+        exit(1);
 }
 
 int send_msgs_nanomsg(char *msg, int reps, char *url)
@@ -90,6 +101,7 @@ int send_msgs_nanomsg(char *msg, int reps, char *url)
     nn_shutdown(sock, 0);
     return 0;
 }
+#endif
 
 void benchmark(char *url, int client_count, int client_id, int max_exp, int repetitions)
 {
