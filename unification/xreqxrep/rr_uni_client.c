@@ -1,16 +1,23 @@
+// #define czmq
+#define nanomsg
+
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
 #include <sys/resource.h>
 
 #include "../helpers/helpers.h"
-#include "../helpers/zhelpers.h"
 
-// #define czmq
-// #define nanomsg
+#ifdef czmq
+#include "../helpers/zhelpers.h"
+#endif
+
+#ifdef nanomsg
+#include <nanomsg/nn.h>
+#include <nanomsg/reqrep.h>
+#endif
 
 // TODO: implement cleanup in case of early termination
-
 int send_msgs_czmq(char *msg, int reps, char *conn)
 {
     struct timespec start, end;
@@ -25,9 +32,8 @@ int send_msgs_czmq(char *msg, int reps, char *conn)
         // printf("Try sending [%s]\n", msg);
         s_send(requester, msg);
         char *msg_recvd = s_recv(requester);
-        if (msg_recvd == "STOP_PLS")
-            // printf("Received reply %d [%s]\n", request_nbr, msg_recvd);
-            free(msg_recvd);
+        // printf("Received reply %d [%s]\n", request_nbr, msg_recvd);
+        free(msg_recvd);
     }
     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
     uint64_t delta_us = get_us_past(start, end);
@@ -37,6 +43,51 @@ int send_msgs_czmq(char *msg, int reps, char *conn)
 
     zmq_close(requester);
     zmq_ctx_destroy(context);
+    return 0;
+}
+
+int send_msgs_nanomsg(char *msg, int reps, char *url)
+{
+    struct timespec start, end;
+    char *buf = NULL;
+    int bytes = -1;
+    int sock;
+    int rv;
+
+    if ((sock = nn_socket(AF_SP, NN_REQ)) < 0) //AF_SP=std socket; NN_REQ=Client for req/rep model
+    {
+        fatal("nn_socket");
+    }
+    // printf("rr_request: at nn_connect\n");
+    if ((rv = nn_connect(sock, url)) < 0)
+    {
+        fatal("nn_connect");
+    }
+    usleep(1000);
+
+    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+    for (int request_nbr = 0; request_nbr != reps; request_nbr++)
+    {
+        // printf("rr_request: at nn_send, with request_nbr <%i> of <%i>\n", request_nbr + 1, reps);
+        if ((bytes = nn_send(sock, msg, strlen(msg) + 1, 0)) < 0)
+        {
+            fatal("nn_send");
+        }
+        // printf("rr_request: at nn_recv");
+        if ((bytes = nn_recv(sock, &buf, NN_MSG, 0)) < 0)
+        {
+            fatal("nn_recv");
+        }
+        // printf("rr_request:RECEIVED: <%s>\n", buf);
+        nn_freemsg(buf);
+    }
+    clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+    uint64_t delta_us = get_us_past(start, end);
+
+    // uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
+    // printf("%" PRIu64 "\n", delta_us);
+
+    nn_shutdown(sock, 0);
     return 0;
 }
 
@@ -52,11 +103,11 @@ void benchmark(char *url, int client_count, int client_id, int max_exp, int repe
         char *msg = build_msg(i, client_id, repetitions, client_count, tag);
 
 #ifdef czmq
-        send_msgs_czmq(msg, repetitions, url); // send header for metadata
+        send_msgs_czmq(msg, repetitions, url);
 #endif
 
 #ifdef nanomsg
-        send_msgs_nanomsg(msg, repetitions, url, client_id);
+        send_msgs_nanomsg(msg, repetitions, url);
 #endif
     }
 }
