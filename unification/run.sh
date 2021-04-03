@@ -15,6 +15,15 @@ function check_arguments () {
     fi
 }
 
+function start_clients () {
+    for (( i=1; i<=$clients; i++ ))
+    do
+        printf "$i "
+        ./dist/rr_uni_client $1 $i $2 $3 &
+    done
+    printf "\n"
+}
+
 function cleanup {
   pkill -f "rr_.*"
   printf "\nCleanup OK\n"
@@ -38,27 +47,30 @@ printf "Total Clients: $clients\n"
 printf "Starting clients: "
 
 
+
 ## Start clients
-for (( i=1; i<=$clients; i++ ))
-do
-    printf "$i "
-    ./dist/rr_uni_client $frontend $i $max_exp $clients &
-done
-printf "\n"
+# Order: 
+#   zmq: 
+#       1. clients
+#       2. broker
+#       3. worker
+#   nanomsg: 
+#       1. broker
+#       2. worker
+#       3. clients
 
 
-## Start worker and proxy
 if [[ "$target" = "czmq" ]]; then
+    start_clients $frontend $max_exp $clients
     ./dist/rr_zmq_broker "tcp://*:5559" "tcp://*:5560" &
+    ./dist/rr_uni_worker $backend $clients
 elif [[ "$target" = "nanomsg" ]]; then
-    ./dist/rr_nanomsg_broker "tcp://*:5559" "tcp://*:5560" &
+    ./dist/rr_nanomsg_broker $backend $frontend &
+    ./dist/rr_uni_worker $backend $clients &
+    start_clients $frontend $max_exp $clients
 else
     echo "Compile.sh: Target was set to <$target> which is not valid. Valid options are 'nanomsg' and 'czmq'"
 fi
 
-
-./dist/rr_uni_worker $backend $clients
-
-printf "Cleanup?: "
 
 cleanup

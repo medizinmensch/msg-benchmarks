@@ -1,0 +1,56 @@
+Compiling for nanomsg. Compiling../xreqxrep/rr_uni_client.c: In function ‘send_msgs_nanomsg’:
+./xreqxrep/rr_uni_client.c:74:5: warning: implicit declaration of function ‘usleep’ [-Wimplicit-function-declaration]
+   74 |     usleep(1000);
+      |     ^~~~~~
+/usr/bin/ld: /tmp/cc9z7mRX.o: in function `fatal':
+rr_uni_client.c:(.text+0x354): undefined reference to `nn_errno'
+/usr/bin/ld: rr_uni_client.c:(.text+0x35b): undefined reference to `nn_strerror'
+/usr/bin/ld: /tmp/cc9z7mRX.o: in function `send_msgs_nanomsg':
+rr_uni_client.c:(.text+0x3c7): undefined reference to `nn_socket'
+/usr/bin/ld: rr_uni_client.c:(.text+0x3ed): undefined reference to `nn_connect'
+/usr/bin/ld: rr_uni_client.c:(.text+0x44e): undefined reference to `nn_send'
+/usr/bin/ld: rr_uni_client.c:(.text+0x47d): undefined reference to `nn_recv'
+/usr/bin/ld: rr_uni_client.c:(.text+0x49e): undefined reference to `nn_freemsg'
+/usr/bin/ld: rr_uni_client.c:(.text+0x4e9): undefined reference to `nn_shutdown'
+collect2: error: ld returned 1 exit status
+../xreqxrep/rr_uni_worker.c: In function ‘uni_receive’:
+./xreqxrep/rr_uni_worker.c:21:18: warning: implicit declaration of function ‘nn_recv’; did you mean ‘s_recv’? [-Wimplicit-function-declaration]
+   21 |     if ((bytes = nn_recv(file_descr, &msg_received, NN_MSG, 0)) < 0) //diff: rc = nn_recv (fd, username, sizeof (username), 0);
+      |                  ^~~~~~~
+      |                  s_recv
+./xreqxrep/rr_uni_worker.c:21:53: error: ‘NN_MSG’ undeclared (first use in this function); did you mean ‘ENOMSG’?
+   21 |     if ((bytes = nn_recv(file_descr, &msg_received, NN_MSG, 0)) < 0) //diff: rc = nn_recv (fd, username, sizeof (username), 0);
+      |                                                     ^~~~~~
+      |                                                     ENOMSG
+./xreqxrep/rr_uni_worker.c:21:53: note: each undeclared identifier is reported only once for each function it appears in
+./xreqxrep/rr_uni_worker.c:22:9: warning: implicit declaration of function ‘fatal’ [-Wimplicit-function-declaration]
+   22 |         fatal("nn_recv");
+      |         ^~~~~
+./xreqxrep/rr_uni_worker.c: In function ‘uni_send’:
+./xreqxrep/rr_uni_worker.c:33:10: error: ‘bytes’ undeclared (first use in this function)
+   33 |     if ((bytes = nn_send(file_descr, msg, strlen(msg) + 1, 0)) < 0)
+      |          ^~~~~
+./xreqxrep/rr_uni_worker.c:33:18: warning: implicit declaration of function ‘nn_send’; did you mean ‘uni_send’? [-Wimplicit-function-declaration]
+   33 |     if ((bytes = nn_send(file_descr, msg, strlen(msg) + 1, 0)) < 0)
+      |                  ^~~~~~~
+      |                  uni_send
+./xreqxrep/rr_uni_worker.c: In function ‘uni_free’:
+./xreqxrep/rr_uni_worker.c:45:5: warning: implicit declaration of function ‘nn_freemsg’ [-Wimplicit-function-declaration]
+   45 |     nn_freemsg(something);
+      |     ^~~~~~~~~~
+./xreqxrep/rr_uni_worker.c: In function ‘main’:
+./xreqxrep/rr_uni_worker.c:126:23: warning: implicit declaration of function ‘nn_socket’; did you mean ‘zmq_socket’? [-Wimplicit-function-declaration]
+  126 |     if ((file_descr = nn_socket(AF_SP, NN_REP)) < 0) //AF_SP=std socket; NN_REQ=Client for req/rep model
+      |                       ^~~~~~~~~
+      |                       zmq_socket
+./xreqxrep/rr_uni_worker.c:126:33: error: ‘AF_SP’ undeclared (first use in this function)
+  126 |     if ((file_descr = nn_socket(AF_SP, NN_REP)) < 0) //AF_SP=std socket; NN_REQ=Client for req/rep model
+      |                                 ^~~~~
+./xreqxrep/rr_uni_worker.c:126:40: error: ‘NN_REP’ undeclared (first use in this function)
+  126 |     if ((file_descr = nn_socket(AF_SP, NN_REP)) < 0) //AF_SP=std socket; NN_REQ=Client for req/rep model
+      |                                        ^~~~~~
+./xreqxrep/rr_uni_worker.c:131:15: warning: implicit declaration of function ‘nn_connect’; did you mean ‘zmq_connect’? [-Wimplicit-function-declaration]
+  131 |     if ((rv = nn_connect(file_descr, url)) < 0)
+      |               ^~~~~~~~~~
+      |               zmq_connect
+.done

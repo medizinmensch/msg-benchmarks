@@ -16,6 +16,10 @@ max_msg_size_power=$3
 
 ./compile.sh $target
 
+# nanomsg?
+frontend=tcp://127.0.0.1:5559 # "tcp://localhost:5559"
+backend=tcp://127.0.0.1:5560 # "tcp://localhost:5560"
+
 
 # for (( i=0; i<=$max_client_power; i++ ))
 # do
@@ -32,5 +36,5 @@ do
     clients=$((2 ** i))
     printf "Number of clients: $clients\n"
     sleep 1
-    ./run.sh "tcp://localhost:5559" "tcp://localhost:5560" $clients $max_msg_size_power $target
+    ./run.sh $frontend $backend $clients $max_msg_size_power $target
 done
