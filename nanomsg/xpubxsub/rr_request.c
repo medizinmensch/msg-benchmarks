@@ -12,7 +12,7 @@
 #include <nanomsg/nn.h>
 #include <nanomsg/reqrep.h>
 
-#define DEBUG
+// #define DEBUG
 
 static char *rand_string(char *str, size_t size)
 {
@@ -54,54 +54,32 @@ int send_msgs(char *msg, int reps, const char *url)
         int sock;
         int rv;
 
-#ifdef DEBUG
-        printf("\nrr_request: at nn_socket\n");
-#endif
+        // printf("\nrr_request: at nn_socket\n");
         if ((sock = nn_socket(AF_SP, NN_REQ)) < 0) //AF_SP=std socket; NN_REQ=Client for req/rep model
-        {
                 fatal("nn_socket");
-        }
-#ifdef DEBUG
-        printf("rr_request: at nn_connect\n");
-#endif
+        // printf("rr_request: at nn_connect\n");
         if ((rv = nn_connect(sock, url)) < 0)
-        {
                 fatal("nn_connect");
-        }
         usleep(1000);
-#ifdef DEBUG
-        printf("rr_request: Start sending:<%s>\n", msg);
-// #ifdef DEBUG
-#endif
+        // printf("rr_request: Start sending:<%s>\n", msg);
 
         clock_gettime(CLOCK_MONOTONIC_RAW, &start);
         for (int request_nbr = 0; request_nbr != reps; request_nbr++)
         {
-#ifdef DEBUG
-                printf("rr_request: at nn_send, with request_nbr <%i> of <%i>\n", request_nbr + 1, reps);
-#endif
+                // printf("rr_request: at nn_send, with request_nbr <%i> of <%i>\n", request_nbr + 1, reps);
                 if ((bytes = nn_send(sock, msg, strlen(msg) + 1, 0)) < 0)
-                {
                         fatal("nn_send");
-                }
-#ifdef DEBUG
-                printf("rr_request: at nn_recv");
-#endif
+                // printf("rr_request: at nn_recv");
                 if ((bytes = nn_recv(sock, &buf, NN_MSG, 0)) < 0)
-                {
                         fatal("nn_recv");
-                }
-#ifdef DEBUG
-                printf("rr_request:RECEIVED: <%s>\n", buf);
-#endif
+                // printf("got: %s \n", buf);
+                // printf("rr_request:RECEIVED: <%s>\n", buf);
                 nn_freemsg(buf);
         }
         clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 
-        uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-#ifdef DEBUG
-        printf("took: %" PRIu64 "s\n", delta_us);
-#endif
+        // uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
+        // printf("took: %" PRIu64 "s\n", delta_us);
 
         return (nn_shutdown(sock, 0));
 }
@@ -122,8 +100,8 @@ int bench_nanomsg(int reps, const char *conn, int exp)
 
 int main(const int argc, const char **argv)
 {
-        int exp = 6;
-        int reps = 10000;
+        int exp = 5;
+        int reps = 1000;
         const char *connection_string = argv[1];
 
 #ifdef DEBUG
