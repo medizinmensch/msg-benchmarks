@@ -1,6 +1,5 @@
 #!/bin/bash
 
-target=nanomsg
 function compile_czmq {
     mkdir -p dist
     printf "Compiling."
@@ -32,6 +31,7 @@ trap cleanup INT
 
 
 # MAIN
+target=$1
 
 if [[ "$target" = "czmq" ]]; then
   printf "Compiling for ${target}. "

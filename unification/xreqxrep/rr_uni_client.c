@@ -53,8 +53,8 @@ int send_msgs_czmq(char *msg, int reps, char *conn)
 
 void fatal(const char *func)
 {
-        fprintf(stderr, "%s: %s\n", func, nn_strerror(nn_errno()));
-        exit(1);
+    fprintf(stderr, "%s: %s\n", func, nn_strerror(nn_errno()));
+    exit(1);
 }
 
 int send_msgs_nanomsg(char *msg, int reps, char *url)
@@ -65,41 +65,35 @@ int send_msgs_nanomsg(char *msg, int reps, char *url)
     int sock;
     int rv;
 
+    // printf("\nrr_request: at nn_socket\n");
     if ((sock = nn_socket(AF_SP, NN_REQ)) < 0) //AF_SP=std socket; NN_REQ=Client for req/rep model
-    {
         fatal("nn_socket");
-    }
     // printf("rr_request: at nn_connect\n");
     if ((rv = nn_connect(sock, url)) < 0)
-    {
         fatal("nn_connect");
-    }
     usleep(1000);
+    // printf("rr_request: Start sending:<%s>\n", msg);
 
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     for (int request_nbr = 0; request_nbr != reps; request_nbr++)
     {
-        // printf("rr_request: at nn_send, with request_nbr <%i> of <%i>\n", request_nbr + 1, reps);
+        printf("rr_request: at nn_send, with request_nbr <%i> of <%i>\n", request_nbr + 1, reps);
         if ((bytes = nn_send(sock, msg, strlen(msg) + 1, 0)) < 0)
-        {
             fatal("nn_send");
-        }
-        // printf("rr_request: at nn_recv");
+        printf("rr_request: at nn_recv");
         if ((bytes = nn_recv(sock, &buf, NN_MSG, 0)) < 0)
-        {
             fatal("nn_recv");
-        }
+        printf("got: %s \n", buf);
         // printf("rr_request:RECEIVED: <%s>\n", buf);
         nn_freemsg(buf);
     }
     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-    uint64_t delta_us = get_us_past(start, end);
+    // uint64_t delta_us = get_us_past(start, end);
 
     // uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
     // printf("%" PRIu64 "\n", delta_us);
 
-    nn_shutdown(sock, 0);
-    return 0;
+    return (nn_shutdown(sock, 0));
 }
 #endif
 
