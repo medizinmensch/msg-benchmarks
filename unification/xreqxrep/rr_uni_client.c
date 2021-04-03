@@ -77,13 +77,12 @@ int send_msgs_nanomsg(char *msg, int reps, char *url)
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     for (int request_nbr = 0; request_nbr != reps; request_nbr++)
     {
-        printf("rr_request: at nn_send, with request_nbr <%i> of <%i>\n", request_nbr + 1, reps);
+        // printf("rr_request: at nn_send, with request_nbr <%i> of <%i>\n", request_nbr + 1, reps);
         if ((bytes = nn_send(sock, msg, strlen(msg) + 1, 0)) < 0)
             fatal("nn_send");
-        printf("rr_request: at nn_recv");
+        // printf("rr_request: at nn_recv");
         if ((bytes = nn_recv(sock, &buf, NN_MSG, 0)) < 0)
             fatal("nn_recv");
-        printf("got: %s \n", buf);
         // printf("rr_request:RECEIVED: <%s>\n", buf);
         nn_freemsg(buf);
     }

@@ -66,8 +66,8 @@ if [[ "$target" = "czmq" ]]; then
     ./dist/rr_uni_worker $backend $clients
 elif [[ "$target" = "nanomsg" ]]; then
     ./dist/rr_nanomsg_broker $backend $frontend &
-    ./dist/rr_uni_worker $backend $clients &
     start_clients $frontend $max_exp $clients
+    ./dist/rr_uni_worker $backend $clients
 else
     echo "Compile.sh: Target was set to <$target> which is not valid. Valid options are 'nanomsg' and 'czmq'"
 fi

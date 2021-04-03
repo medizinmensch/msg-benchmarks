@@ -33,11 +33,9 @@ char *uni_receive(void *responder, int file_descr)
 
 #ifdef nanomsg
     char *msg_received = NULL; //diff: char username[128];
-    printf("worker: uni_receive: pre recv\n");
     int bytes;
     if ((bytes = nn_recv(file_descr, &msg_received, NN_MSG, 0)) < 0) //diff: rc = nn_recv (fd, username, sizeof (username), 0);
         fatal("nn_recv");
-    printf("\t\tpost recv\n");
     return msg_received;
 #endif
 }
@@ -50,11 +48,8 @@ void uni_send(void *responder, int file_descr, char *msg)
 #endif
 #ifdef nanomsg
     int bytes;
-    printf("SENDING NOW\n");
     if ((bytes = nn_send(file_descr, msg, strlen(msg) + 1, 0)) < 0)
         fatal("nn_send");
-
-    printf("SENDING SUCCESS\n");
 #endif
 }
 
@@ -101,6 +96,7 @@ uint64_t exchange_data(int *exit_msgs, int *response_code, int nanomsg_file_desc
     for (int i = 0; i < (repetitions / 10); i++)
     {
         char *string = uni_receive(zmq_responder, nanomsg_file_descr);
+        
         bytes_received = bytes_received + strlen(string);
         uni_send(zmq_responder, nanomsg_file_descr, header);
 
@@ -145,13 +141,11 @@ int main(int argc, char *argv[])
 #ifdef nanomsg
     int rv;
 
-    printf("file_descr %i\n", file_descr);
     if ((file_descr = nn_socket(AF_SP, NN_REP)) < 0) //AF_SP=std socket; NN_REQ=Client for req/rep model
         fatal("nn_socket");
     if ((rv = nn_connect(file_descr, url)) < 0)
         fatal("nn_connect");
 
-    printf("file_descr %i\n", file_descr);
 #endif
 
     printf("\nTag;client_id;msg_size;repetitions;client_count;Throughput_in_KiBi/second;bytes_received;delta_us;\n");
