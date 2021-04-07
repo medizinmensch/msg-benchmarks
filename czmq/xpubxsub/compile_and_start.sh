@@ -12,7 +12,7 @@ gcc rrbroker.c -o ./dist/rrbroker -lzmq -lm
 # Config
 frontend="tcp://localhost:5559"
 backend="tcp://localhost:5560"
-clients=10
+clients=$1
 
 printf "Frontent: $frontend\nBackend: $backend\nStarting $clients clients: "
 

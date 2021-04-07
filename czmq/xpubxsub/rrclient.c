@@ -95,7 +95,7 @@ void bench_zmq(int repetitions, char *connection, int client_id)
 
         msg = build_msg(msg_size + 1, client_id);
         _send_msgs(msg, repetitions, connection, client_id);
-        
+
         // i--; // infinity loop
     }
 }
@@ -104,8 +104,8 @@ int main(int argc, char *argv[])
 {
     char *conn = argv[1];
     int client_id = strtol(argv[2], NULL, 10);
-    
-    int reps = 100000;
+
+    int reps = 10000;
     bench_zmq(reps, conn, client_id);
 
     return 0;

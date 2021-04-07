@@ -26,7 +26,6 @@ int main(int argc, char *argv[])
         int bytes_recieved = 0;
         clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 
-
         for (int i = 0; i < reps; i++)
         {
             //  Wait for next request from client
@@ -40,17 +39,15 @@ int main(int argc, char *argv[])
             client[max_client_id_digits] = '\0';
 
             bytes_recieved = bytes_recieved + strlen(string);
-        
 
             s_send(responder, client);
             free(string);
         }
 
-        
         clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-        uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
+        uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000000 + (end.tv_nsec - start.tv_nsec);
         // printf("%" PRIu64, delta_us); //724066
-        double kibips = ((float)bytes_recieved * 976.5625) / (float)delta_us;
+        double kibips = ((float)bytes_recieved / 1024) / ((float)delta_us / 1000000000);
 
         printf("%.2f\n", kibips);
         bytes_recieved = 0;
