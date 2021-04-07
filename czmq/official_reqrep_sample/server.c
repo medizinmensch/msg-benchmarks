@@ -5,7 +5,7 @@ int main (void)
 {
     //  Socket to talk to clients
     zsock_t *responder = zsock_new (ZMQ_REP);
-    int rc = zsock_bind (responder, "tcp://*:5555");
+    int rc = zsock_bind (responder, "tcp://127.0.0.1:5555");
     assert (rc == 0);
 
     while (1) {
