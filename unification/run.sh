@@ -26,6 +26,8 @@ function start_clients () {
 
 function cleanup {
   pkill -f "rr_.*"
+  rm ./reqrep_fe.ipc
+  rm ./reqrep_be.ipc
   printf "\nCleanup OK\n"
 }
 trap cleanup INT
