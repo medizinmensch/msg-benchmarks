@@ -1,3 +1,5 @@
 dist/
 .vscode
 czmq/xpubxsub/py/venv
+czmq/official_reqrep_sample/client
+czmq/official_reqrep_sample/server

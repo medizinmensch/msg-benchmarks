@@ -8,8 +8,8 @@ gcc rr_request.c -Wall -lnanomsg -lm -o ./dist/rr_request
 gcc rr_proxy.c -Wall -lnanomsg -lm -o ./dist/rr_proxy
 gcc rr_reply.c -Wall -lnanomsg -lm -o ./dist/rr_reply
 
-frontend=tcp://127.0.0.1:5555
-backend=tcp://127.0.0.1:5556
+frontend=ipc://reqrep_a.ipc
+backend=ipc://reqrep_b.ipc
 
 ./dist/rr_proxy $backend $frontend & proxy=$! &&
 ./dist/rr_reply $backend & reply=$! &&
