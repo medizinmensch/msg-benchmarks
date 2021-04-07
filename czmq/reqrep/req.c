@@ -72,7 +72,7 @@ int send_msgs(char *send_str, int reps, char *conn, bool debug)
 
 void bench_zmq(int reps, char *conn, bool debug)
 {
-    printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
+    // printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
     char *str;
     for (int i = 0; i < 8; i++)
     {
@@ -86,7 +86,7 @@ void bench_zmq(int reps, char *conn, bool debug)
 int main(int argc, char *argv[])
 {
     char *conn = argv[1];
-    printf("%s\n", conn);
+    printf("Req: %s\n", conn);
 
     bench_zmq(10000, conn, false);
 

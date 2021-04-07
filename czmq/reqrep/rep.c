@@ -4,7 +4,7 @@ int bind_resp(char *argv)
 {
     //  Socket to talk to clients
     zsock_t *responder = zsock_new(ZMQ_REP);
-    int rc = zsock_bind(responder, "ipc:///tmp/feeds/0");
+    int rc = zsock_bind(responder, argv);
     // assert (rc == 0);
 
     char *str;
@@ -31,6 +31,7 @@ int bind_resp(char *argv)
 int main(int argc, char *argv[])
 {
     char *conn = argv[0];
+    printf("Rep: %s\n", conn);
 
     bind_resp(conn);
     return 0;
