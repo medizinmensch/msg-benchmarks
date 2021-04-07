@@ -3,3 +3,4 @@ dist/
 czmq/xpubxsub/py/venv
 czmq/official_reqrep_sample/client
 czmq/official_reqrep_sample/server
+general_tests.c
