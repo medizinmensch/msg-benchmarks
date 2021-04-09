@@ -1,5 +1,3 @@
-//  Simple request-reply broker
-
 #include "../helpers/zhelpers.h"
 
 int main(int argc, char *argv[])

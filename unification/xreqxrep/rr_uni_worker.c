@@ -56,7 +56,7 @@ void uni_send(void *responder, int file_descr, char *msg)
 void uni_free(void *something)
 {
 #ifdef czmq
-    free(something); //???
+    free(something);
 #endif
 
 #ifdef nanomsg
@@ -129,15 +129,12 @@ int main(int argc, char *argv[])
 #endif
 
 // Initialize msg-libs
-
-// ZeroMQ
 #ifdef czmq
     void *context = zmq_ctx_new();
     responder = zmq_socket(context, ZMQ_REP);
     zmq_connect(responder, url);
 #endif
 
-// Nanomsg
 #ifdef nanomsg
     int rv;
 
@@ -145,11 +142,9 @@ int main(int argc, char *argv[])
         fatal("nn_socket");
     if ((rv = nn_connect(file_descr, url)) < 0)
         fatal("nn_connect");
-
 #endif
 
     printf("\nTag;client_id;msg_size;repetitions;client_count;Throughput_in_KiBi/second;bytes_received;delta_us;\n");
-    // clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     while (1)
     {
         clock_gettime(CLOCK_MONOTONIC_RAW, &start);
@@ -164,7 +159,6 @@ int main(int argc, char *argv[])
         if (response_code == 1)
             break;
     }
-    // }
     //  We never get here, but clean up anyhow
 
 #ifdef czmq

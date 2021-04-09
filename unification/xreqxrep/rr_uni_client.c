@@ -1,7 +1,7 @@
 // #define czmq
 // #define nanomsg
 
-#include <unistd.h> //?
+#include <unistd.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
@@ -18,7 +18,6 @@
 #include <nanomsg/reqrep.h>
 #endif
 
-// TODO: implement cleanup in case of early termination
 #ifdef czmq
 int send_msgs_czmq(char *msg, int reps, char *conn)
 {
@@ -39,9 +38,6 @@ int send_msgs_czmq(char *msg, int reps, char *conn)
     }
     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
     uint64_t delta_us = get_us_past(start, end);
-
-    // uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-    // printf("%" PRIu64 "\n", delta_us);
 
     zmq_close(requester);
     zmq_ctx_destroy(context);
@@ -65,14 +61,11 @@ int send_msgs_nanomsg(char *msg, int reps, char *url)
     int sock;
     int rv;
 
-    // printf("\nrr_request: at nn_socket\n");
     if ((sock = nn_socket(AF_SP, NN_REQ)) < 0) //AF_SP=std socket; NN_REQ=Client for req/rep model
         fatal("nn_socket");
-    // printf("rr_request: at nn_connect\n");
     if ((rv = nn_connect(sock, url)) < 0)
         fatal("nn_connect");
     usleep(1000);
-    // printf("rr_request: Start sending:<%s>\n", msg);
 
     clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     for (int request_nbr = 0; request_nbr != reps; request_nbr++)
@@ -89,16 +82,12 @@ int send_msgs_nanomsg(char *msg, int reps, char *url)
     clock_gettime(CLOCK_MONOTONIC_RAW, &end);
     // uint64_t delta_us = get_us_past(start, end);
 
-    // uint64_t delta_us = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000;
-    // printf("%" PRIu64 "\n", delta_us);
-
     return (nn_shutdown(sock, 0));
 }
 #endif
 
 void benchmark(char *url, int client_count, int client_id, int max_exp, int repetitions)
 {
-    // printf("Repetitions, Message Size in characters, protocoll used, Elapsed time in us\n");
 
     char *tag = "G";
     for (int i = 2; i < max_exp; i++)
