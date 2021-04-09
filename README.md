@@ -6,7 +6,7 @@ Similar to a XPUB/XSUB pattern which utilizes multiple publisher and subscriber 
 
 # How to run (Unix)
 
-Make sure have the czmq and/or the nanomsg library installed. 
+Make sure have the czmq and/or the nanomsg library installed. You can compile and execute yourself, or you directly start with the benchmark which will take care of everything itself.
 
 
 ## Compilation
@@ -26,6 +26,8 @@ Runs proxy, master and a number of clients with a url (tcp (both) or ipc(nanomsg
 
 ## Benchmark
 
+The Benchmarking script will compile and run on your behalf. 
+
 You need 4 Arguments:
 1. target (czmq or nanomsg) 
 2. Protocoll (ipc or tcp)
@@ -36,5 +38,7 @@ You need 4 Arguments:
 
 Example: 
 ```bash
-./benchmark.sh czmq ipc 4 16
+./benchmark.sh czmq ipc 2 12
 ```
+
+You can pipe `> to_some_file.txt` to save the results. Do a regex `^(?![GE]).*\n` to get rid of all non-csv data and import it into the tool of your choice. 
