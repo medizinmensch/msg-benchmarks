@@ -26,8 +26,8 @@ function start_clients () {
 
 function cleanup {
   pkill -f "rr_.*"
-  rm ./reqrep_fe.ipc
-  rm ./reqrep_be.ipc
+  rm -f ./reqrep_fe.ipc
+  rm -f ./reqrep_be.ipc
   printf "\nCleanup OK\n"
 }
 trap cleanup INT
@@ -39,12 +39,12 @@ backend=$2
 clients=$3
 max_exp=$4
 target=$5
-repetitons=5000
+# repetitions=5000
 
 printf "Frontent: $frontend\n"
 printf "Backend: $backend\n"
 printf "max_exp: $max_exp\n"
-printf "repetitons $repetitons\n"
+# printf "repetitions $repetitions\n"
 printf "Total Clients: $clients\n"
 printf "Starting clients: "
 

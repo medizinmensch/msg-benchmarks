@@ -21,13 +21,11 @@
 #ifdef czmq
 int send_msgs_czmq(char *msg, int reps, char *conn)
 {
-    struct timespec start, end;
     void *context = zmq_ctx_new();
     void *requester = zmq_socket(context, ZMQ_REQ);
     zmq_connect(requester, conn);
 
     int request_nbr;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     for (request_nbr = 0; request_nbr != reps; request_nbr++)
     {
         // printf("Try sending [%s]\n", msg);
@@ -36,8 +34,6 @@ int send_msgs_czmq(char *msg, int reps, char *conn)
         // printf("Received reply %d [%s]\n", request_nbr, msg_recvd);
         free(msg_recvd);
     }
-    clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-    uint64_t delta_us = get_us_past(start, end);
 
     zmq_close(requester);
     zmq_ctx_destroy(context);
@@ -55,7 +51,6 @@ void fatal(const char *func)
 
 int send_msgs_nanomsg(char *msg, int reps, char *url)
 {
-    struct timespec start, end;
     char *buf = NULL;
     int bytes = -1;
     int sock;
@@ -67,7 +62,6 @@ int send_msgs_nanomsg(char *msg, int reps, char *url)
         fatal("nn_connect");
     usleep(1000);
 
-    clock_gettime(CLOCK_MONOTONIC_RAW, &start);
     for (int request_nbr = 0; request_nbr != reps; request_nbr++)
     {
         // printf("rr_request: at nn_send, with request_nbr <%i> of <%i>\n", request_nbr + 1, reps);
@@ -79,21 +73,19 @@ int send_msgs_nanomsg(char *msg, int reps, char *url)
         // printf("rr_request:RECEIVED: <%s>\n", buf);
         nn_freemsg(buf);
     }
-    clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-    // uint64_t delta_us = get_us_past(start, end);
 
     return (nn_shutdown(sock, 0));
 }
 #endif
 
-void benchmark(char *url, int client_count, int client_id, int max_exp, int repetitions)
+void benchmark(char *url, int client_count, int client_id, int max_msg_size_exp, int repetitions)
 {
 
     char *tag = "G";
-    for (int i = 2; i < max_exp; i++)
+    for (int i = 2; i < max_msg_size_exp; i++)
     {
-        if (i == max_exp - 1)
-            tag = "E";
+        if (i == max_msg_size_exp - 1)
+            tag = "E"; // for the last few messages
         char *msg = build_msg(i, client_id, repetitions, client_count, tag);
 
 #ifdef czmq
@@ -119,7 +111,7 @@ int main(int argc, char *argv[])
     int client_id = atoi(argv[2]);
     int max_exp = atoi(argv[3]);
     int client_count = atoi(argv[4]);
-    int repetitions = 5000;
+    int repetitions = 8192/client_count;
 
     if (max_exp < 4)
     {
