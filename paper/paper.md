@@ -9,9 +9,12 @@
   - [Worker](#worker)
   - [Router](#router)
   - [Client (Master)](#client-master)
-  - [Ausführendes System und Compiler-Optionen](#ausführendes-system-und-compiler-optionen)
+  - [Compiler-Optionen und Ausführendes System](#compiler-optionen-und-ausführendes-system)
 - [Erwartungshaltung](#erwartungshaltung)
 - [Ergebnisse](#ergebnisse)
+  - [ZeroMQ](#zeromq)
+  - [nanomsg](#nanomsg)
+  - [TCP vs IPC](#tcp-vs-ipc)
 - [Diskussion](#diskussion)
 - [Zusammenfassung](#zusammenfassung)
 - [Ausblick](#ausblick)
@@ -21,7 +24,7 @@
 
 Da die vertikale Skalierung von Rechenressourcen aufwändiger wird, wird das nutzen von verteilten Rechenressourcen zunehmend wichtiger. Anstatt ein Rechenproblem einer einzelnen rechenstarken Maschine zu geben, kann die Rechenkraft vieler Maschinen (Nodes) genutzt werden. Dafür ist es wichtig die Aufgabe effizient in Teilaufgaben zu unterteilen sowie die Teilaufgaben and die Nodes auszugeben und einzusammeln. Die Kommunikation zu den Nodes wird oft über Messaging Protokolle gelößt.
 
-Im Rahmen des Forschungsprojekts "Grischa", an der HTW Berlin, wird an Verteilten Systemen geforscht. Grischa ist ein Schachprogramm, welches versucht möglichst viele Züge im Vorraus zu evaluieren und dabei, im Gegensatz zu vielen anderen, ohne Heuristiken oder oder Neuronale Netze arbeitet. Dafür wird eine Menge an Nodes genutzt, die nach den bestmöglichen Zügen suchen. 
+Im Rahmen des Forschungsprojekts "Grischa", an der HTW Berlin, wird an Verteilten Systemen geforscht. Grischa ist ein Schachprogramm, welches versucht möglichst viele Züge im Vorraus zu evaluieren und dabei, im Gegensatz zu vielen anderen, ohne Heuristiken oder oder Neuronale Netze arbeitet. Dafür wird eine Menge an Nodes mittels Grid-Computing genutzt, die nach den bestmöglichen Zügen suchen. 
 Für die Kommunikation zwischen den verteilten Rechenressourcen wird derzeit die Messaging Bibliothek ZeroMQ benutzt. 
 
 Ziel dieser Arbeit ist die Analyse von Grischas Messaging-System sowie die Evaluation von ZeroMQ mittels Gegenüberstellung zu einer alternative namens nanomsg in den Punkten Geschwindigkeit und Bedienbarkeit. 
@@ -116,24 +119,68 @@ Header der gesendeten Nachrichten.
 | repetitions  | Anzahl der Wiederholungen die in dieser msg_size vorliegen. I.d.r 5000 |
 | client_count | Beschreibt wie viele Clients anfangs gestartet wurden                  |
 
-## Ausführendes System und Compiler-Optionen
+## Compiler-Optionen und Ausführendes System
 
+Beide Programme werden mit den Compileroptionen `-O3` und `-march=native` compelliert, um auch Optimierungen wie loops unrolling sowie AVX2 zu ermöglichen. 
 
-| Komponente  | Spezifikation                 |
-| ----------- | ----------------------------- |
-| CPU Type    | Intel(R) Core(TM) i5-7200U    |
-| CPU Kerne   | 2 (physisch) bzw. 4 (logisch) |
-| CPU Taktung | 2,5 GHz                       |
-| RAM         | 16 GB @ 2133MHz               |
-| Disk        | 256 GB SATA SSD               |
+Um den Anwendungsfall von Grid-Computing Nahe zu kommen, wird Server-Grade Hardware eines Cloud Dienstleisters angemietet. 
+
+| Komponente | Spezifikation                   |
+| ---------- | ------------------------------- |
+| CPU Type   | AMD EPIC der 7003-Serie (Zen 3) |
+| CPU Kerne  | 8 vCPU Kerne                    |
+| RAM        | 32 GB                           |
+| Disk       | 240 GB  SSD                     |
+
 
 # Erwartungshaltung
 
-Da beide Bibliotheken die gleiche Unterliegende Technologie nutzen (Unix Sockets), und synchron arbeiten, wird von einer ähnlichen Performance ausgegangen. 
+Da beide Bibliotheken die gleiche unterliegende Technologie nutzen (Unix Sockets) und synchron arbeiten, wird von einer ähnlichen Performance ausgegangen. Grundsätzlich könnte in beiden Fällen der Message-Broker ein Flaschenhals darstellen. Da die Broker die Nachrichten nur weiterleiten und von der Bibliotek aus optimiert sein sollten, sollte die Geschwindigkeit mit zunehmenden Clients zunächst steigen, bis der Durchsatz des Brokers gesättigt ist. Nach einem kurzen Plateau könnte der Durchsatz dann zurückgehen, da [todo]. Die `msg_size` sollte sich ebenfalls mit zunehmender Größe positiv auf den Durchsatz auswirken. Auch hier muss ein Punkt kommen, an dem der Durchsatz stagniert und gegebenenfalls wieder sinkt. Zwar ist die maximale Packetgröße von TCP Packeten 64kiB ([todo] citation needed), Ethernet aber hat teils deutlich geringere Maximum Transmission Units von 1500 (Ethernet) bis 9000 (Gigabit Ethernet). Daher kommt es gegebenenfalls auch auf die Implementierung von ZeroMQ und Nanomsg an ([todo] ...)
+
+([Todo] Speedup TCP vs IPC)
 
 # Ergebnisse
-* Überraschende Ergebnisse
-* Objektiv darstellen was man sieht
+
+```tmp
+* Message-Bibliothek (ZeroMQ und nanomsg)
+* Nachrichtengröße (msg_size)
+* Anzahl der Nodes (Clients)
+* Protokoll (TCP und IPC)
+```
+
+## ZeroMQ 
+
+Der Durchsatz von ZeroMQ nimmt mit zunehmender `msg_size` zu. Das Maximum wird, je nach Anzahl der Clients, zwischen 256 und 1024 Bytes erreicht. Danach nimmt der Durchsatz stark ab. 
+
+Der Durchsatz steigt ebenfalls mit der Anzahl an Clients, bis etwa 16, und nimmt danach wieder etwas ab. 
+
+Am höchsten ist der Durchsatz bei einer `msg_size` von 1024 Bytes und 16 Clients bei ungefähr 10 kiB/s. 
+
+![ZMQ_Durchsatz_abhängig_von_client_count](images/ZMQ_Durchsatz_abhängig_von_client_count.png)
+
+## nanomsg
+
+Der Durchsatz der nanomsg implementierung nimmt ebenfalls mit zunehmender `msg_size` zu. Im Gegensatz zu ZeroMQ gibt es keine `msg_size`, an dem der Durchsatz wieder fällt. 
+
+Eine steigende Anzahl an Clients sorgt für einen Steigenden Durchsatz, bis zu einer größe von ca. 16 Clients. Im Gegensatz zu ZeroMQ fällt mit zusätzlicher Erhöhung von Clients der Durchsatz nicht. 
+
+Der höchste gemessene Durchsatz bei nanomsg beträgt 655 kiB/s mit 64 Clients und einer `msg_size` von 64kiB. 
+
+![nanomsg_Durchsatz_abhängig_von_client_count](images/nanomsg_Durchsatz_abhängig_von_client_count.png)
+
+In einem Bereich zwischen einer `msg_size` von 4 und 512 Bytes leistet ZeroMQ einen leicht höheren Durchsatz, egal ob mit einem oder 64 Clients. ([todo]: Besprechung: ist das die Latency?).
+
+![Throughput_depending_on_client_count](images/Throughput_depending_on_client_count.png)
+
+Nanomsg stürtzte wiederholt bei der maximal eingestellten `client_size` von 128 und einer `msg_size` von 1024 Bytes ab und konnte diese Reihe daher nicht beenden. 
+
+## TCP vs IPC
+
+
+
+![Speedup_IPC_gegenüber_TCP_bei_unterschiedlicher_client_size](images/Speedup_IPC_gegenüber_TCP_bei_unterschiedlicher_client_size.png)
+
+
 
 # Diskussion
 * Was bedeuten die Ergebnisse?
