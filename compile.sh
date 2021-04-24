@@ -3,22 +3,22 @@
 function compile_czmq {
     mkdir -p dist
     printf "Compiling."
-    gcc ./xreqxrep/rr_uni_client.c -o ./dist/rr_uni_client -lzmq -lm -Dczmq
+    gcc ./xreqxrep/rr_uni_client.c -o ./dist/rr_uni_client -lzmq -lm -Dczmq -O3 -march=native
     printf "."
-    gcc ./xreqxrep/rr_uni_worker.c -o ./dist/rr_uni_worker -lzmq -lm -Dczmq
+    gcc ./xreqxrep/rr_uni_worker.c -o ./dist/rr_uni_worker -lzmq -lm -Dczmq -O3 -march=native
     printf "."
-    gcc ./xreqxrep/rr_zmq_broker.c -o ./dist/rr_zmq_broker -lzmq -lm
+    gcc ./xreqxrep/rr_zmq_broker.c -o ./dist/rr_zmq_broker -lzmq -lm -O3 -march=native
     printf "done\n"
 }
 
 function compile_nanomsg {
     mkdir -p dist
     printf "Compiling."
-    gcc ./xreqxrep/rr_uni_client.c -o ./dist/rr_uni_client -lnanomsg -lm -Dnanomsg
+    gcc ./xreqxrep/rr_uni_client.c -o ./dist/rr_uni_client -lnanomsg -lm -Dnanomsg -O3 -march=native
     printf "."
-    gcc ./xreqxrep/rr_uni_worker.c -o ./dist/rr_uni_worker -lnanomsg -lm -Dnanomsg
+    gcc ./xreqxrep/rr_uni_worker.c -o ./dist/rr_uni_worker -lnanomsg -lm -Dnanomsg -O3 -march=native
     printf "."
-    gcc ./xreqxrep/rr_nanomsg_broker.c -o ./dist/rr_nanomsg_broker -lnanomsg -lm
+    gcc ./xreqxrep/rr_nanomsg_broker.c -o ./dist/rr_nanomsg_broker -lnanomsg -lm -O3 -march=native
     printf "done\n"
 }
 
