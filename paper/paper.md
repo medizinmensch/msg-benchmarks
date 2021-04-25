@@ -11,14 +11,18 @@
   - [Client (Master)](#client-master)
   - [Compiler-Optionen und Ausführendes System](#compiler-optionen-und-ausführendes-system)
 - [Erwartungshaltung](#erwartungshaltung)
+  - [ZeroMQ vs nanomsg](#zeromq-vs-nanomsg)
+  - [TCP vs IPC](#tcp-vs-ipc)
 - [Ergebnisse](#ergebnisse)
   - [ZeroMQ](#zeromq)
   - [nanomsg](#nanomsg)
-  - [TCP vs IPC](#tcp-vs-ipc)
+  - [TCP vs IPC](#tcp-vs-ipc-1)
 - [Diskussion](#diskussion)
 - [Zusammenfassung](#zusammenfassung)
 - [Ausblick](#ausblick)
-- [TODO](#todo)
+- [*META*](#meta)
+  - [TODO](#todo)
+  - [Infos](#infos)
 
 # Einleitung
 
@@ -71,8 +75,8 @@ Relevant für die Grischa Anwendung ist weniger die Echtzeit-Verarbeitung und me
 
 Zusammengefasst sind die untersuchten Parameter:
 * Message-Bibliothek (ZeroMQ und nanomsg)
-* Nachrichtengröße (msg_size)
-* Anzahl der Nodes (Clients)
+* Nachrichtengröße (als `msg_size` bezeichnet)
+* Anzahl der Nodes (als `client_count` bezeichnet)
 * Protokoll (TCP und IPC)
 
 Um dem Anwendungsfall von Grischa nachzustellen, wird neben Master- (Client) und Worker-Nodes auch mit einem Router gearbeitet. Da das PubSub-Modell die Komplexität durch das Topic-basierte abbonieren von Nachrichten erhöht, wird auf Request-Reply zurückgegriffen (ReqRep bzw., aufgrund des Brokers, "XReqXRep"). Die Architektur ist auf Abbildung [TODO] abgebildet. 
@@ -131,11 +135,18 @@ Um den Anwendungsfall von Grid-Computing Nahe zu kommen, wird Server-Grade Hardw
 | CPU Kerne  | 8 vCPU Kerne                    |
 | RAM        | 32 GB                           |
 | Disk       | 240 GB  SSD                     |
+| System     | Ubuntu 20.04                    |
 
+Für jeden Datenpunkt (Eine Implementierung mit einem Protokoll mit einer menge an clients und einer `msg_size`) wird 10 mal wiederholt und der Durchschnitt gebildet.
 
 # Erwartungshaltung
 
+## ZeroMQ vs nanomsg
+
 Da beide Bibliotheken die gleiche unterliegende Technologie nutzen (Unix Sockets) und synchron arbeiten, wird von einer ähnlichen Performance ausgegangen. Grundsätzlich könnte in beiden Fällen der Message-Broker ein Flaschenhals darstellen. Da die Broker die Nachrichten nur weiterleiten und von der Bibliotek aus optimiert sein sollten, sollte die Geschwindigkeit mit zunehmenden Clients zunächst steigen, bis der Durchsatz des Brokers gesättigt ist. Nach einem kurzen Plateau könnte der Durchsatz dann zurückgehen, da [todo]. Die `msg_size` sollte sich ebenfalls mit zunehmender Größe positiv auf den Durchsatz auswirken. Auch hier muss ein Punkt kommen, an dem der Durchsatz stagniert und gegebenenfalls wieder sinkt. Zwar ist die maximale Packetgröße von TCP Packeten 64kiB ([todo] citation needed), Ethernet aber hat teils deutlich geringere Maximum Transmission Units von 1500 (Ethernet) bis 9000 (Gigabit Ethernet). Daher kommt es gegebenenfalls auch auf die Implementierung von ZeroMQ und Nanomsg an ([todo] ...)
+
+## TCP vs IPC
+
 
 ([Todo] Speedup TCP vs IPC)
 
@@ -151,7 +162,7 @@ ZeroMQs Durchsatz nimmt mit zunehmender `msg_size` zu. Das Maximum wird, je nach
 
 Der Durchsatz steigt ebenfalls mit der Anzahl an Clients, bis etwa 16, und nimmt danach wieder etwas ab. 
 
-Am höchsten ist der Durchsatz bei einer `msg_size` von 1024 Bytes und 16 Clients bei ungefähr 10 kiB/s. 
+Am höchsten ist der Durchsatz bei einer `msg_size` von 1024 Bytes und 16 Clients bei ca 9.8 MiB/s. 
 
 ![ZMQ_Durchsatz_abhängig_von_client_count](images/ZMQ_Durchsatz_abhängig_von_client_count.png)
 
@@ -161,7 +172,7 @@ Der Durchsatz der nanomsg implementierung nimmt ebenfalls mit zunehmender `msg_s
 
 Eine steigende Anzahl an Clients sorgt für einen Steigenden Durchsatz, bis zu einer größe von ca. 16 Clients. Im Gegensatz zu ZeroMQ fällt mit zusätzlicher Erhöhung von Clients der Durchsatz nicht. 
 
-Der höchste gemessene Durchsatz bei nanomsg beträgt 655 kiB/s mit 64 Clients und einer `msg_size` von 64kiB. 
+Der höchste gemessene Durchsatz bei nanomsg beträgt 655 MiB/s mit 64 Clients und einer `msg_size` von 64KiB. 
 
 ![nanomsg_Durchsatz_abhängig_von_client_count](images/nanomsg_Durchsatz_abhängig_von_client_count.png)
 
@@ -180,6 +191,9 @@ Mit IPC kann ein Speedup zwischen 0.98 und 1.72 gemessen werden. Der Durchschnit
 
 # Diskussion
 
+Die Kurve der ZeroMQ Implementierung verhält sich wie erwartet: Der Durchsatz ist zunächst langsam, aber zunehmend mit steigender `msg_size` und `client_cound`, bis er wieder absinkt. 
+Überraschend ist der grundsätzlich niedrige Durchsatz welcher zwischen ca. 0.05 und 10 MiB/s liegt. Da mit zunehmender `msg_size` 
+
 
 
 * Was bedeuten die Ergebnisse?
@@ -196,7 +210,21 @@ Mit IPC kann ein Speedup zwischen 0.98 und 1.72 gemessen werden. Der Durchschnit
 # Ausblick
 
 
-*META*
+# *META*
 
-# TODO
+## TODO
 * auf einheitliches wording (z.B. zeromq) achten
+
+## Infos
+
+* IPC Sockets = Unix Domain Sockets or Unix Sockets; bidirectional
+* pipes come in:
+  * 'named'
+    * FIFO
+    * can also be used for IPC
+    * lasts as long as the system is up or the file is deleted
+  * 'unnamed' / 'anonymous'
+    * lasts as long as it's process
+    * FIFO
+    * one way = simplex; duplex needs to pipes
+    * can be used for IPC
