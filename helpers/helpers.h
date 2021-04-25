@@ -35,14 +35,14 @@ char *rand_string_alloc(size_t size)
     return s;
 }
 
-char *build_msg(int exp_size, int client_id, int repetitions, int client_count, char *tag)
+char *build_msg(int exp_size, int client_id, int repetitions, int worker_count, char *tag)
 {
     char header[61]; // len(str(2**64)*3) + 1
     int base = 2;
     int msg_size = pow(base, exp_size);
     char *msg = rand_string_alloc(msg_size);
 
-    snprintf(header, sizeof(header), "%s;%i;%i;%i;%i;", tag, client_id, msg_size, repetitions, client_count); // client_id,msg_size,repetitions
+    snprintf(header, sizeof(header), "%s;%i;%i;%i;%i;", tag, client_id, msg_size, repetitions, worker_count); // client_id,msg_size,repetitions
     for (int i = 0; i < strlen(header); i++)
         msg[i] = header[i];
 
@@ -55,9 +55,14 @@ char *build_msg(int exp_size, int client_id, int repetitions, int client_count, 
 uint64_t get_us_past(struct timespec start, struct timespec end)
 {
     return ((end.tv_sec - start.tv_sec) * 1000000) + ((end.tv_nsec - start.tv_nsec) / 1000);
+    // 1 s = 1 000 000 000 ns
+    // both get normalized to us (microseconds):
+    // * us = Xs  * 1 000 000
+    // * us = Xns / 1 000
 }
 
 double get_kibips(int bytes_recieved, uint64_t delta_us)
 {
-    return ((double)bytes_recieved / 1024) / ((double)delta_us / 1000);
+//  return ((double)bytes_recieved / 1024) / ((double)delta_us / 1000);     // old: kb/ms
+    return ((double)bytes_recieved / 1024) / ((double)delta_us / 1000000);  // new: kb/s
 }
