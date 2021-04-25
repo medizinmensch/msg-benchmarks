@@ -141,16 +141,13 @@ Da beide Bibliotheken die gleiche unterliegende Technologie nutzen (Unix Sockets
 
 # Ergebnisse
 
-```tmp
-* Message-Bibliothek (ZeroMQ und nanomsg)
-* Nachrichtengröße (msg_size)
-* Anzahl der Nodes (Clients)
-* Protokoll (TCP und IPC)
-```
+Nanomsg stürtzt wiederholt bei der maximal eingestellten `client_size` von 128 und einer `msg_size` von 1024 Bytes ab. Daher konnte diese Reihe nicht beendet werden. 
+
+Trotz großer Bemühungen konnte ZeroMQ nur mittels TCP und nicht mit IPC betrieben werden. Der Vergleich zwischen TCP und IPC kann jedoch mit nanomsg durchgeführt werden.
 
 ## ZeroMQ 
 
-Der Durchsatz von ZeroMQ nimmt mit zunehmender `msg_size` zu. Das Maximum wird, je nach Anzahl der Clients, zwischen 256 und 1024 Bytes erreicht. Danach nimmt der Durchsatz stark ab. 
+ZeroMQs Durchsatz nimmt mit zunehmender `msg_size` zu. Das Maximum wird, je nach Anzahl der Clients, zwischen 256 und 1024 Bytes erreicht. Danach nimmt der Durchsatz stark ab. 
 
 Der Durchsatz steigt ebenfalls mit der Anzahl an Clients, bis etwa 16, und nimmt danach wieder etwas ab. 
 
@@ -172,17 +169,19 @@ In einem Bereich zwischen einer `msg_size` von 4 und 512 Bytes leistet ZeroMQ ei
 
 ![Throughput_depending_on_client_count](images/Throughput_depending_on_client_count.png)
 
-Nanomsg stürtzte wiederholt bei der maximal eingestellten `client_size` von 128 und einer `msg_size` von 1024 Bytes ab und konnte diese Reihe daher nicht beenden. 
 
 ## TCP vs IPC
 
-
+Mit IPC kann ein Speedup zwischen 0.98 und 1.72 gemessen werden. Der Durchschnitt aller 107 Messpunkte beträgt ca. 1.28, der Median liegt bei ca. 1.27. Die Messungen schwanken stark und es lässt sich kein unmittelbares Muster erkennen. 
 
 ![Speedup_IPC_gegenüber_TCP_bei_unterschiedlicher_client_size](images/Speedup_IPC_gegenüber_TCP_bei_unterschiedlicher_client_size.png)
 
 
 
 # Diskussion
+
+
+
 * Was bedeuten die Ergebnisse?
   * Warum ist es hier langsamer / schneller
   * Aspekte:
