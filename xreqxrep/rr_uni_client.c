@@ -1,13 +1,12 @@
 // #define czmq
 // #define nanomsg
 
-#include <unistd.h>
-#include <stdio.h>
-#include <sys/time.h>
-#include <time.h>
-#include <sys/resource.h>
-
 #include "../helpers/helpers.h"
+
+#include <inttypes.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <unistd.h>
 
 #ifdef czmq
 #include "../helpers/zhelpers.h"
@@ -18,88 +17,110 @@
 #include <nanomsg/reqrep.h>
 #endif
 
-#ifdef czmq
-int send_msgs_czmq(char *msg, int reps, char *conn)
-{
-    void *context = zmq_ctx_new();
-    void *requester = zmq_socket(context, ZMQ_REQ);
-    zmq_connect(requester, conn);
-
-    int request_nbr;
-    for (request_nbr = 0; request_nbr != reps; request_nbr++)
-    {
-        // printf("Try sending [%s]\n", msg);
-        s_send(requester, msg);
-        char *msg_recvd = s_recv(requester);
-        // printf("Received reply %d [%s]\n", request_nbr, msg_recvd);
-        free(msg_recvd);
-    }
-
-    zmq_close(requester);
-    zmq_ctx_destroy(context);
-    return 0;
-}
-#endif
-
 #ifdef nanomsg
-
 void fatal(const char *func)
 {
     fprintf(stderr, "%s: %s\n", func, nn_strerror(nn_errno()));
     exit(1);
 }
-
-int send_msgs_nanomsg(char *msg, int reps, char *url)
-{
-    char *buf = NULL;
-    int bytes = -1;
-    int sock;
-    int rv;
-
-    if ((sock = nn_socket(AF_SP, NN_REQ)) < 0) //AF_SP=std socket; NN_REQ=Client for req/rep model
-        fatal("nn_socket");
-    if ((rv = nn_connect(sock, url)) < 0)
-        fatal("nn_connect");
-    usleep(1000);
-
-    for (int request_nbr = 0; request_nbr != reps; request_nbr++)
-    {
-        // printf("rr_request: at nn_send, with request_nbr <%i> of <%i>\n", request_nbr + 1, reps);
-        if ((bytes = nn_send(sock, msg, strlen(msg) + 1, 0)) < 0)
-            fatal("nn_send");
-        // printf("rr_request: at nn_recv");
-        if ((bytes = nn_recv(sock, &buf, NN_MSG, 0)) < 0)
-            fatal("nn_recv");
-        // printf("rr_request:RECEIVED: <%s>\n", buf);
-        nn_freemsg(buf);
-    }
-
-    return (nn_shutdown(sock, 0));
-}
 #endif
 
-void benchmark(char *url, int client_count, int client_id, int max_msg_size_exp, int repetitions)
+char *uni_receive(void *responder, int file_descr)
 {
-
-    char *tag = "G";
-    for (int i = 2; i < max_msg_size_exp; i++)
-    {
-        if (i == max_msg_size_exp - 1)
-            tag = "E"; // for the last few messages
-        char *msg = build_msg(i, client_id, repetitions, client_count, tag);
-
 #ifdef czmq
-        send_msgs_czmq(msg, repetitions, url);
+    return s_recv(responder);
 #endif
 
 #ifdef nanomsg
-        send_msgs_nanomsg(msg, repetitions, url);
+    char *msg_received = NULL; //diff: char username[128];
+    int bytes;
+    if ((bytes = nn_recv(file_descr, &msg_received, NN_MSG, 0)) < 0) //diff: rc = nn_recv (fd, username, sizeof (username), 0);
+        fatal("nn_recv");
+    return msg_received;
 #endif
+}
+
+void uni_send(void *responder, int file_descr, char *msg)
+{
+    // printf("BLA\n");
+#ifdef czmq
+    s_send(responder, msg);
+#endif
+#ifdef nanomsg
+    int bytes;
+    if ((bytes = nn_send(file_descr, msg, strlen(msg) + 1, 0)) < 0)
+        fatal("nn_send");
+#endif
+}
+
+void uni_free(void *something)
+{
+#ifdef czmq
+    free(something);
+#endif
+
+#ifdef nanomsg
+    nn_freemsg(something);
+#endif
+}
+
+uint64_t exchange_data(int *exit_msgs, int *response_code, int nanomsg_file_descr, void *zmq_responder)
+{
+    uint64_t bytes_received = 0;
+    char delimiter[] = ";";
+    size_t max_header_size = 500;
+    char header[max_header_size];
+    int msg_parts = 10; // determines in how many parts we split the incoming msgs; higher means more data points but also more inacurate
+
+    char *msg_received = uni_receive(zmq_responder, nanomsg_file_descr);
+
+    strncpy(header, msg_received, max_header_size);
+    // printf("RAW: %s\n", header);
+
+    uni_free(msg_received);
+
+    // we must declare these variables exactly in this sequence
+    char *tag = strtok(header, delimiter);
+    int client_id = atoi(strtok(NULL, delimiter));
+    int msg_size = atoi(strtok(NULL, delimiter));
+    int repetitions = atoi(strtok(NULL, delimiter));
+    int worker_count = atoi(strtok(NULL, delimiter));
+    repetitions = repetitions * worker_count;
+    if (strcmp(tag, "E") == 0)
+        *exit_msgs += 1;
+
+    printf("%s;%i;%i;%i;%i;", tag, client_id, msg_size, repetitions, worker_count);
+
+    uni_send(zmq_responder, nanomsg_file_descr, header);
+
+    for (int i = 0; i < (repetitions / 10); i++)
+    {
+        char *string = uni_receive(zmq_responder, nanomsg_file_descr);
+
+        bytes_received = bytes_received + strlen(string);
+        uni_send(zmq_responder, nanomsg_file_descr, header);
+
+        uni_free(string);
     }
+
+    if ((msg_parts - 3) < *exit_msgs)
+        *response_code = 1;
+
+    return bytes_received;
 }
 
 int main(int argc, char *argv[])
 {
+    char *url = argv[1];
+    int worker_count = atoi(argv[2]);
+    struct timespec start, end;
+    uint64_t bytes_received = 0;
+    int response_code = 0;
+    int exit_msgs = 0;
+
+    void *responder = NULL; // czmq
+    int file_descr = -1;    // nanomsg
+
 #ifndef czmq
 #ifndef nanomsg
     printf("No target was specified during compilation. Define either <czmq> or <nanomsg>.");
@@ -107,19 +128,44 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-    char *url = argv[1];
-    int client_id = atoi(argv[2]);
-    int max_exp = atoi(argv[3]);
-    int client_count = atoi(argv[4]);
-    int repetitions = 8192/client_count;
+// Initialize msg-libs
+#ifdef czmq
+    void *context = zmq_ctx_new();
+    responder = zmq_socket(context, ZMQ_REP);
+    zmq_connect(responder, url);
+#endif
 
-    if (max_exp < 4)
+#ifdef nanomsg
+    int rv;
+
+    if ((file_descr = nn_socket(AF_SP, NN_REP)) < 0) //AF_SP=std socket; NN_REQ=Client for req/rep model
+        fatal("nn_socket");
+    if ((rv = nn_connect(file_descr, url)) < 0)
+        fatal("nn_connect");
+#endif
+
+    printf("\nTag;client_id;msg_size;repetitions;worker_count;Throughput_in_KiBi/second;bytes_received;delta_us;\n");
+    while (1)
     {
-        printf("max_exp must be at least 4");
-        exit(1);
+        clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+
+        bytes_received = exchange_data(&exit_msgs, &response_code, file_descr, responder);
+
+        // struct timespec tmp = end;
+        clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+        uint64_t delta_us = get_us_past(start, end);
+        double kibips = get_kibips(bytes_received, delta_us);
+        printf("%.5f;%llu;%llu\n", kibips, bytes_received, delta_us);
+        if (response_code == 1)
+            break;
     }
+    //  We never get here, but clean up anyhow
 
-    benchmark(url, client_count, client_id, max_exp, repetitions);
-
+#ifdef czmq
+    zmq_close(responder);
+    zmq_ctx_destroy(context);
+#endif
+    printf("Done\n");
+    exit(0);
     return 0;
 }
