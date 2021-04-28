@@ -1,10 +1,9 @@
 #!/bin/bash
 
-
 check_arguments () {
     if [ "$1" -ne 5 ]; then
-        printf "You need to pass 5 arguments: frontend url, backend url, amount of workers and biggest exp increase of msg size (base is 2) and target (czmq or nanomsg) Eg.: \n"
-        printf './run.sh "tcp://localhost:5559" "tcp://localhost:5560" 1 20 czmq\n'
+        printf "You need to pass 5 arguments: frontend url, backend url, amount of workers and biggest exp increase of msg size (base is 2) and target (zmq or nanomsg) Eg.: \n"
+        printf './run.sh "tcp://localhost:5559" "tcp://localhost:5560" 1 20 zmq\n'
         kill -s TERM $RUN_PID
     fi
 }
@@ -56,7 +55,7 @@ printf "worker_count: $worker_count\n"
 #       3. client (1)
 
 
-if [[ "$target" = "czmq" ]]; then
+if [[ "$target" = "zmq" ]]; then
     start_workers
     ./dist/rr_zmq_broker "tcp://*:5559" "tcp://*:5560" &
     ./dist/rr_uni_client $backend $worker_count
@@ -65,7 +64,7 @@ elif [[ "$target" = "nanomsg" ]]; then
     start_workers
     ./dist/rr_uni_client $backend $worker_count
 else
-    echo "Compile.sh: Target was set to <$target> which is not valid. Valid options are 'nanomsg' and 'czmq'"
+    echo "Compile.sh: Target was set to <$target> which is not valid. Valid options are 'nanomsg' and 'zmq'"
 fi
 
 

@@ -1,4 +1,4 @@
-// #define czmq
+// #define zmq
 // #define nanomsg
 
 #include "../helpers/helpers.h"
@@ -8,7 +8,7 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-#ifdef czmq
+#ifdef zmq
 #include "../helpers/zhelpers.h"
 #endif
 
@@ -27,7 +27,7 @@ void fatal(const char *func)
 
 char *uni_receive(void *responder, int file_descr)
 {
-#ifdef czmq
+#ifdef zmq
     return s_recv(responder);
 #endif
 
@@ -42,8 +42,7 @@ char *uni_receive(void *responder, int file_descr)
 
 void uni_send(void *responder, int file_descr, char *msg)
 {
-    // printf("BLA\n");
-#ifdef czmq
+#ifdef zmq
     s_send(responder, msg);
 #endif
 #ifdef nanomsg
@@ -55,7 +54,7 @@ void uni_send(void *responder, int file_descr, char *msg)
 
 void uni_free(void *something)
 {
-#ifdef czmq
+#ifdef zmq
     free(something);
 #endif
 
@@ -118,18 +117,18 @@ int main(int argc, char *argv[])
     int response_code = 0;
     int exit_msgs = 0;
 
-    void *responder = NULL; // czmq
+    void *responder = NULL; // zmq
     int file_descr = -1;    // nanomsg
 
-#ifndef czmq
+#ifndef zmq
 #ifndef nanomsg
-    printf("No target was specified during compilation. Define either <czmq> or <nanomsg>.");
+    printf("No target was specified during compilation. Define either <zmq> or <nanomsg>.");
     return 0;
 #endif
 #endif
 
 // Initialize msg-libs
-#ifdef czmq
+#ifdef zmq
     void *context = zmq_ctx_new();
     responder = zmq_socket(context, ZMQ_REP);
     zmq_connect(responder, url);
@@ -161,7 +160,7 @@ int main(int argc, char *argv[])
     }
     //  We never get here, but clean up anyhow
 
-#ifdef czmq
+#ifdef zmq
     zmq_close(responder);
     zmq_ctx_destroy(context);
 #endif

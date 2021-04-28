@@ -1,4 +1,4 @@
-// #define czmq
+// #define zmq
 // #define nanomsg
 
 #include <unistd.h>
@@ -9,7 +9,7 @@
 
 #include "../helpers/helpers.h"
 
-#ifdef czmq
+#ifdef zmq
 #include "../helpers/zhelpers.h"
 #endif
 
@@ -18,7 +18,7 @@
 #include <nanomsg/reqrep.h>
 #endif
 
-#ifdef czmq
+#ifdef zmq
 int send_msgs_czmq(char *msg, int reps, char *conn)
 {
     void *context = zmq_ctx_new();
@@ -88,7 +88,7 @@ void benchmark(char *url, int worker_count, int client_id, int max_msg_size_exp,
             tag = "E"; // for the last few messages
         char *msg = build_msg(i, client_id, repetitions, worker_count, tag);
 
-#ifdef czmq
+#ifdef zmq
         send_msgs_czmq(msg, repetitions, url);
 #endif
 
@@ -100,9 +100,9 @@ void benchmark(char *url, int worker_count, int client_id, int max_msg_size_exp,
 
 int main(int argc, char *argv[])
 {
-#ifndef czmq
+#ifndef zmq
 #ifndef nanomsg
-    printf("No target was specified during compilation. Define either <czmq> or <nanomsg>.");
+    printf("No target was specified during compilation. Define either <zmq> or <nanomsg>.");
     return 0;
 #endif
 #endif
