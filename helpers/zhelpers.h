@@ -48,7 +48,7 @@
 //  is being terminated.
 static char *
 s_recv (void *socket) {
-    enum { cap = 256 };
+    enum { cap = 65537 };
     char buffer [cap];
     int size = zmq_recv (socket, buffer, cap - 1, 0);
     if (size == -1)
