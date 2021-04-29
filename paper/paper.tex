@@ -1,847 +1,417 @@
-\documentclass[10pt,journal,compsoc]{IEEEtran}
-% If IEEEtran.cls has not been installed into the LaTeX system files,
-% manually specify the path to it like:
-% \documentclass[10pt,journal,compsoc]{../sty/IEEEtran}
+\documentclass{article}
+\usepackage[utf8]{inputenc}
 
-% For Computer Society journals, IEEEtran defaults to the use of 
-% Palatino/Palladio as is done in IEEE Computer Society journals.
-% To go back to Times Roman, you can use this code:
-%\renewcommand{\rmdefault}{ptm}\selectfont
+\title{Messaging im verteilten Echtzeit-Computing\\[0.2em]Performancevergleich zwischen ZeroMQ und nanomsg}
+\author{Youri Seichter, HTW Berlin \\ Prof. Dr. Hermann Heßling, HTW Berlin }
 
+\date{29. April 2021}
 
-% Some very useful LaTeX packages include:
-% (uncomment the ones you want to load)
+\usepackage{natbib}
+\usepackage{graphicx}
 
-
-
-% *** MISC UTILITY PACKAGES ***
-%
-%\usepackage{ifpdf}
-% Heiko Oberdiek's ifpdf.sty is very useful if you need conditional
-% compilation based on whether the output is pdf or dvi.
-% usage:
-% \ifpdf
-%   % pdf code
-% \else
-%   % dvi code
-% \fi
-% The latest version of ifpdf.sty can be obtained from:
-% http://www.ctan.org/pkg/ifpdf
-% Also, note that IEEEtran.cls V1.7 and later provides a builtin
-% \ifCLASSINFOpdf conditional that works the same way.
-% When switching from latex to pdflatex and vice-versa, the compiler may
-% have to be run twice to clear warning/error messages.
-
-
-% *** CITATION PACKAGES ***
-%
-\ifCLASSOPTIONcompsoc
-  % The IEEE Computer Society needs nocompress option
-  % requires cite.sty v4.0 or later (November 2003)
-  \usepackage[nocompress]{cite}
-\else
-  % normal IEEE
-  \usepackage{cite}
-\fi
-% cite.sty was written by Donald Arseneau
-% V1.6 and later of IEEEtran pre-defines the format of the cite.sty package
-% \cite{} output to follow that of the IEEE. Loading the cite package will
-% result in citation numbers being automatically sorted and properly
-% "compressed/ranged". e.g., [1], [9], [2], [7], [5], [6] without using
-% cite.sty will become [1], [2], [5]--[7], [9] using cite.sty. cite.sty's
-% \cite will automatically add leading space, if needed. Use cite.sty's
-% noadjust option (cite.sty V3.8 and later) if you want to turn this off
-% such as if a citation ever needs to be enclosed in parenthesis.
-% cite.sty is already installed on most LaTeX systems. Be sure and use
-% version 5.0 (2009-03-20) and later if using hyperref.sty.
-% The latest version can be obtained at:
-% http://www.ctan.org/pkg/cite
-% The documentation is contained in the cite.sty file itself.
-%
-% Note that some packages require special options to format as the Computer
-% Society requires. In particular, Computer Society  papers do not use
-% compressed citation ranges as is done in typical IEEE papers
-% (e.g., [1]-[4]). Instead, they list every citation separately in order
-% (e.g., [1], [2], [3], [4]). To get the latter we need to load the cite
-% package with the nocompress option which is supported by cite.sty v4.0
-% and later.
-
-
-
-
-
-% *** GRAPHICS RELATED PACKAGES ***
-%
-\ifCLASSINFOpdf
-  % \usepackage[pdftex]{graphicx}
-  % declare the path(s) where your graphic files are
-  % \graphicspath{{../pdf/}{../jpeg/}}
-  % and their extensions so you won't have to specify these with
-  % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
-\else
-  % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
-  % will default to the driver specified in the system graphics.cfg if no
-  % driver is specified.
-  % \usepackage[dvips]{graphicx}
-  % declare the path(s) where your graphic files are
-  % \graphicspath{{../eps/}}
-  % and their extensions so you won't have to specify these with
-  % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.eps}
-\fi
-% graphicx was written by David Carlisle and Sebastian Rahtz. It is
-% required if you want graphics, photos, etc. graphicx.sty is already
-% installed on most LaTeX systems. The latest version and documentation
-% can be obtained at: 
-% http://www.ctan.org/pkg/graphicx
-% Another good source of documentation is "Using Imported Graphics in
-% LaTeX2e" by Keith Reckdahl which can be found at:
-% http://www.ctan.org/pkg/epslatex
-%
-% latex, and pdflatex in dvi mode, support graphics in encapsulated
-% postscript (.eps) format. pdflatex in pdf mode supports graphics
-% in .pdf, .jpeg, .png and .mps (metapost) formats. Users should ensure
-% that all non-photo figures use a vector format (.eps, .pdf, .mps) and
-% not a bitmapped formats (.jpeg, .png). The IEEE frowns on bitmapped formats
-% which can result in "jaggedy"/blurry rendering of lines and letters as
-% well as large increases in file sizes.
-%
-% You can find documentation about the pdfTeX application at:
-% http://www.tug.org/applications/pdftex
-
-
-
-
-% *** SPECIALIZED LIST PACKAGES ***
-%\usepackage{acronym}
-% acronym.sty was written by Tobias Oetiker. This package provides tools for
-% managing documents with large numbers of acronyms. (You don't *have* to
-% use this package - unless you have a lot of acronyms, you may feel that
-% such package management of them is bit of an overkill.)
-% Do note that the acronym environment (which lists acronyms) will have a
-% problem when used under IEEEtran.cls because acronym.sty relies on the
-% description list environment - which IEEEtran.cls has customized for
-% producing IEEE style lists. A workaround is to declared the longest
-% label width via the IEEEtran.cls \IEEEiedlistdecl global control:
-%
-% \renewcommand{\IEEEiedlistdecl}{\IEEEsetlabelwidth{SONET}}
-% \begin{acronym}
-%
-% \end{acronym}
-% \renewcommand{\IEEEiedlistdecl}{\relax}% remember to reset \IEEEiedlistdecl
-%
-% instead of using the acronym environment's optional argument.
-% The latest version and documentation can be obtained at:
-% http://www.ctan.org/pkg/acronym
-
-
-%\usepackage{algorithmic}
-% algorithmic.sty was written by Peter Williams and Rogerio Brito.
-% This package provides an algorithmic environment fo describing algorithms.
-% You can use the algorithmic environment in-text or within a figure
-% environment to provide for a floating algorithm. Do NOT use the algorithm
-% floating environment provided by algorithm.sty (by the same authors) or
-% algorithm2e.sty (by Christophe Fiorio) as the IEEE does not use dedicated
-% algorithm float types and packages that provide these will not provide
-% correct IEEE style captions. The latest version and documentation of
-% algorithmic.sty can be obtained at:
-% http://www.ctan.org/pkg/algorithms
-% Also of interest may be the (relatively newer and more customizable)
-% algorithmicx.sty package by Szasz Janos:
-% http://www.ctan.org/pkg/algorithmicx
-
-
-
-
-% *** ALIGNMENT PACKAGES ***
-%
-%\usepackage{array}
-% Frank Mittelbach's and David Carlisle's array.sty patches and improves
-% the standard LaTeX2e array and tabular environments to provide better
-% appearance and additional user controls. As the default LaTeX2e table
-% generation code is lacking to the point of almost being broken with
-% respect to the quality of the end results, all users are strongly
-% advised to use an enhanced (at the very least that provided by array.sty)
-% set of table tools. array.sty is already installed on most systems. The
-% latest version and documentation can be obtained at:
-% http://www.ctan.org/pkg/array
-
-
-%\usepackage{mdwmath}
-%\usepackage{mdwtab}
-% Also highly recommended is Mark Wooding's extremely powerful MDW tools,
-% especially mdwmath.sty and mdwtab.sty which are used to format equations
-% and tables, respectively. The MDWtools set is already installed on most
-% LaTeX systems. The lastest version and documentation is available at:
-% http://www.ctan.org/pkg/mdwtools
-
-
-% IEEEtran contains the IEEEeqnarray family of commands that can be used to
-% generate multiline equations as well as matrices, tables, etc., of high
-% quality.
-
-
-%\usepackage{eqparbox}
-% Also of notable interest is Scott Pakin's eqparbox package for creating
-% (automatically sized) equal width boxes - aka "natural width parboxes".
-% Available at:
-% http://www.ctan.org/pkg/eqparbox
-
-
-
-
-% *** SUBFIGURE PACKAGES ***
-%\ifCLASSOPTIONcompsoc
-%  \usepackage[caption=false,font=footnotesize,labelfont=sf,textfont=sf]{subfig}
-%\else
-%  \usepackage[caption=false,font=footnotesize]{subfig}
-%\fi
-% subfig.sty, written by Steven Douglas Cochran, is the modern replacement
-% for subfigure.sty, the latter of which is no longer maintained and is
-% incompatible with some LaTeX packages including fixltx2e. However,
-% subfig.sty requires and automatically loads Axel Sommerfeldt's caption.sty
-% which will override IEEEtran.cls' handling of captions and this will result
-% in non-IEEE style figure/table captions. To prevent this problem, be sure
-% and invoke subfig.sty's "caption=false" package option (available since
-% subfig.sty version 1.3, 2005/06/28) as this is will preserve IEEEtran.cls
-% handling of captions.
-% Note that the Computer Society format requires a sans serif font rather
-% than the serif font used in traditional IEEE formatting and thus the need
-% to invoke different subfig.sty package options depending on whether
-% compsoc mode has been enabled.
-%
-% The latest version and documentation of subfig.sty can be obtained at:
-% http://www.ctan.org/pkg/subfig
-
-
-
-
-% *** FLOAT PACKAGES ***
-%
-%\usepackage{fixltx2e}
-% fixltx2e, the successor to the earlier fix2col.sty, was written by
-% Frank Mittelbach and David Carlisle. This package corrects a few problems
-% in the LaTeX2e kernel, the most notable of which is that in current
-% LaTeX2e releases, the ordering of single and double column floats is not
-% guaranteed to be preserved. Thus, an unpatched LaTeX2e can allow a
-% single column figure to be placed prior to an earlier double column
-% figure.
-% Be aware that LaTeX2e kernels dated 2015 and later have fixltx2e.sty's
-% corrections already built into the system in which case a warning will
-% be issued if an attempt is made to load fixltx2e.sty as it is no longer
-% needed.
-% The latest version and documentation can be found at:
-% http://www.ctan.org/pkg/fixltx2e
-
-
-%\usepackage{stfloats}
-% stfloats.sty was written by Sigitas Tolusis. This package gives LaTeX2e
-% the ability to do double column floats at the bottom of the page as well
-% as the top. (e.g., "\begin{figure*}[!b]" is not normally possible in
-% LaTeX2e). It also provides a command:
-%\fnbelowfloat
-% to enable the placement of footnotes below bottom floats (the standard
-% LaTeX2e kernel puts them above bottom floats). This is an invasive package
-% which rewrites many portions of the LaTeX2e float routines. It may not work
-% with other packages that modify the LaTeX2e float routines. The latest
-% version and documentation can be obtained at:
-% http://www.ctan.org/pkg/stfloats
-% Do not use the stfloats baselinefloat ability as the IEEE does not allow
-% \baselineskip to stretch. Authors submitting work to the IEEE should note
-% that the IEEE rarely uses double column equations and that authors should try
-% to avoid such use. Do not be tempted to use the cuted.sty or midfloat.sty
-% packages (also by Sigitas Tolusis) as the IEEE does not format its papers in
-% such ways.
-% Do not attempt to use stfloats with fixltx2e as they are incompatible.
-% Instead, use Morten Hogholm'a dblfloatfix which combines the features
-% of both fixltx2e and stfloats:
-%
-% \usepackage{dblfloatfix}
-% The latest version can be found at:
-% http://www.ctan.org/pkg/dblfloatfix
-
-
-%\ifCLASSOPTIONcaptionsoff
-%  \usepackage[nomarkers]{endfloat}
-% \let\MYoriglatexcaption\caption
-% \renewcommand{\caption}[2][\relax]{\MYoriglatexcaption[#2]{#2}}
-%\fi
-% endfloat.sty was written by James Darrell McCauley, Jeff Goldberg and 
-% Axel Sommerfeldt. This package may be useful when used in conjunction with 
-% IEEEtran.cls'  captionsoff option. Some IEEE journals/societies require that
-% submissions have lists of figures/tables at the end of the paper and that
-% figures/tables without any captions are placed on a page by themselves at
-% the end of the document. If needed, the draftcls IEEEtran class option or
-% \CLASSINPUTbaselinestretch interface can be used to increase the line
-% spacing as well. Be sure and use the nomarkers option of endfloat to
-% prevent endfloat from "marking" where the figures would have been placed
-% in the text. The two hack lines of code above are a slight modification of
-% that suggested by in the endfloat docs (section 8.4.1) to ensure that
-% the full captions always appear in the list of figures/tables - even if
-% the user used the short optional argument of \caption[]{}.
-% IEEE papers do not typically make use of \caption[]'s optional argument,
-% so this should not be an issue. A similar trick can be used to disable
-% captions of packages such as subfig.sty that lack options to turn off
-% the subcaptions:
-% For subfig.sty:
-% \let\MYorigsubfloat\subfloat
-% \renewcommand{\subfloat}[2][\relax]{\MYorigsubfloat[]{#2}}
-% However, the above trick will not work if both optional arguments of
-% the \subfloat command are used. Furthermore, there needs to be a
-% description of each subfigure *somewhere* and endfloat does not add
-% subfigure captions to its list of figures. Thus, the best approach is to
-% avoid the use of subfigure captions (many IEEE journals avoid them anyway)
-% and instead reference/explain all the subfigures within the main caption.
-% The latest version of endfloat.sty and its documentation can obtained at:
-% http://www.ctan.org/pkg/endfloat
-%
-% The IEEEtran \ifCLASSOPTIONcaptionsoff conditional can also be used
-% later in the document, say, to conditionally put the References on a 
-% page by themselves.
-
-
-
-
-
-% *** PDF, URL AND HYPERLINK PACKAGES ***
-%
-%\usepackage{url}
-% url.sty was written by Donald Arseneau. It provides better support for
-% handling and breaking URLs. url.sty is already installed on most LaTeX
-% systems. The latest version and documentation can be obtained at:
-% http://www.ctan.org/pkg/url
-% Basically, \url{my_url_here}.
-
-
-% NOTE: PDF thumbnail features are not required in IEEE papers
-%       and their use requires extra complexity and work.
-%\ifCLASSINFOpdf
-%  \usepackage[pdftex]{thumbpdf}
-%\else
-%  \usepackage[dvips]{thumbpdf}
-%\fi
-% thumbpdf.sty and its companion Perl utility were written by Heiko Oberdiek.
-% It allows the user a way to produce PDF documents that contain fancy
-% thumbnail images of each of the pages (which tools like acrobat reader can
-% utilize). This is possible even when using dvi->ps->pdf workflow if the
-% correct thumbpdf driver options are used. thumbpdf.sty incorporates the
-% file containing the PDF thumbnail information (filename.tpm is used with
-% dvips, filename.tpt is used with pdftex, where filename is the base name of
-% your tex document) into the final ps or pdf output document. An external
-% utility, the thumbpdf *Perl script* is needed to make these .tpm or .tpt
-% thumbnail files from a .ps or .pdf version of the document (which obviously
-% does not yet contain pdf thumbnails). Thus, one does a:
-% 
-% thumbpdf filename.pdf 
-%
-% to make a filename.tpt, and:
-%
-% thumbpdf --mode dvips filename.ps
-%
-% to make a filename.tpm which will then be loaded into the document by
-% thumbpdf.sty the NEXT time the document is compiled (by pdflatex or
-% latex->dvips->ps2pdf). Users must be careful to regenerate the .tpt and/or
-% .tpm files if the main document changes and then to recompile the
-% document to incorporate the revised thumbnails to ensure that thumbnails
-% match the actual pages. It is easy to forget to do this!
-% 
-% Unix systems come with a Perl interpreter. However, MS Windows users
-% will usually have to install a Perl interpreter so that the thumbpdf
-% script can be run. The Ghostscript PS/PDF interpreter is also required.
-% See the thumbpdf docs for details. The latest version and documentation
-% can be obtained at.
-% http://www.ctan.org/pkg/thumbpdf
-
-
-% NOTE: PDF hyperlink and bookmark features are not required in IEEE
-%       papers and their use requires extra complexity and work.
-% *** IF USING HYPERREF BE SURE AND CHANGE THE EXAMPLE PDF ***
-% *** TITLE/SUBJECT/AUTHOR/KEYWORDS INFO BELOW!!           ***
-\newcommand\MYhyperrefoptions{bookmarks=true,bookmarksnumbered=true,
-pdfpagemode={UseOutlines},plainpages=false,pdfpagelabels=true,
-colorlinks=true,linkcolor={black},citecolor={black},urlcolor={black},
-pdftitle={Messaging im verteilten Echtzeit-Computing: Performancevergleich zwischen ZeroMQ und nanomsg},
-pdfsubject={Typesetting TEST, TEST, TEST, TEST, TEST, TEST},
-pdfauthor={Youri Seichter},
-pdfkeywords={HTW Berlin, Performance, Benchmark, Messaging, }}
-%\ifCLASSINFOpdf
-%\usepackage[\MYhyperrefoptions,pdftex]{hyperref}
-%\else
-%\usepackage[\MYhyperrefoptions,breaklinks=true,dvips]{hyperref}
-%\usepackage{breakurl}
-%\fi
-% One significant drawback of using hyperref under DVI output is that the
-% LaTeX compiler cannot break URLs across lines or pages as can be done
-% under pdfLaTeX's PDF output via the hyperref pdftex driver. This is
-% probably the single most important capability distinction between the
-% DVI and PDF output. Perhaps surprisingly, all the other PDF features
-% (PDF bookmarks, thumbnails, etc.) can be preserved in
-% .tex->.dvi->.ps->.pdf workflow if the respective packages/scripts are
-% loaded/invoked with the correct driver options (dvips, etc.). 
-% As most IEEE papers use URLs sparingly (mainly in the references), this
-% may not be as big an issue as with other publications.
-%
-% That said, Vilar Camara Neto created his breakurl.sty package which
-% permits hyperref to easily break URLs even in dvi mode.
-% Note that breakurl, unlike most other packages, must be loaded
-% AFTER hyperref. The latest version of breakurl and its documentation can
-% be obtained at:
-% http://www.ctan.org/pkg/breakurl
-% breakurl.sty is not for use under pdflatex pdf mode.
-%
-% The advanced features offer by hyperref.sty are not required for IEEE
-% submission, so users should weigh these features against the added
-% complexity of use.
-% The package options above demonstrate how to enable PDF bookmarks
-% (a type of table of contents viewable in Acrobat Reader) as well as
-% PDF document information (title, subject, author and keywords) that is
-% viewable in Acrobat reader's Document_Properties menu. PDF document
-% information is also used extensively to automate the cataloging of PDF
-% documents. The above set of options ensures that hyperlinks will not be
-% colored in the text and thus will not be visible in the printed page,
-% but will be active on "mouse over". USING COLORS OR OTHER HIGHLIGHTING
-% OF HYPERLINKS CAN RESULT IN DOCUMENT REJECTION BY THE IEEE, especially if
-% these appear on the "printed" page. IF IN DOUBT, ASK THE RELEVANT
-% SUBMISSION EDITOR. You may need to add the option hypertexnames=false if
-% you used duplicate equation numbers, etc., but this should not be needed
-% in normal IEEE work.
-% The latest version of hyperref and its documentation can be obtained at:
-% http://www.ctan.org/pkg/hyperref
-
-
-
-
-
-% *** Do not adjust lengths that control margins, column widths, etc. ***
-% *** Do not use packages that alter fonts (such as pslatex).         ***
-% There should be no need to do such things with IEEEtran.cls V1.6 and later.
-% (Unless specifically asked to do so by the journal or conference you plan
-% to submit to, of course. )
-
-
-% correct bad hyphenation here
-\hyphenation{op-tical net-works semi-conduc-tor}
-
+\renewcommand*\contentsname{Inhaltsverzeichnis}
+\renewcommand\refname{Literaturverzeichnis}
+\renewcommand{\listfigurename}{Abbildungsverzeichnis}
 
 \begin{document}
-%
-% paper title
-% Titles are generally capitalized except for words such as a, an, and, as,
-% at, but, by, for, in, nor, of, on, or, the, to and up, which are usually
-% not capitalized unless they are the first or last word of the title.
-% Linebreaks \\ can be used within to get better formatting as desired.
-% Do not put math or special symbols in the title.
-\title{Bare Advanced Demo of IEEEtran.cls for\\ IEEE Computer Society Journals}
-%
-%
-% author names and IEEE memberships
-% note positions of commas and nonbreaking spaces ( ~ ) LaTeX will not break
-% a structure at a ~ so this keeps an author's name from being broken across
-% two lines.
-% use \thanks{} to gain access to the first footnote area
-% a separate \thanks must be used for each paragraph as LaTeX2e's \thanks
-% was not built to handle multiple paragraphs
-%
-%
-%\IEEEcompsocitemizethanks is a special \thanks that produces the bulleted
-% lists the Computer Society journals use for "first footnote" author
-% affiliations. Use \IEEEcompsocthanksitem which works much like \item
-% for each affiliation group. When not in compsoc mode,
-% \IEEEcompsocitemizethanks becomes like \thanks and
-% \IEEEcompsocthanksitem becomes a line break with idention. This
-% facilitates dual compilation, although admittedly the differences in the
-% desired content of \author between the different types of papers makes a
-% one-size-fits-all approach a daunting prospect. For instance, compsoc 
-% journal papers have the author affiliations above the "Manuscript
-% received ..."  text while in non-compsoc journals this is reversed. Sigh.
 
-\author{Michael~Shell,~\IEEEmembership{Member,~IEEE,}
-        John~Doe,~\IEEEmembership{Fellow,~OSA,}
-        and~Jane~Doe,~\IEEEmembership{Life~Fellow,~IEEE}% <-this % stops a space
-\IEEEcompsocitemizethanks{\IEEEcompsocthanksitem M. Shell was with the Department
-of Electrical and Computer Engineering, Georgia Institute of Technology, Atlanta,
-GA, 30332.\protect\\
-% note need leading \protect in front of \\ to get a newline within \thanks as
-% \\ is fragile and will error, could use \hfil\break instead.
-E-mail: see http://www.michaelshell.org/contact.html
-\IEEEcompsocthanksitem J. Doe and J. Doe are with Anonymous University.}% <-this % stops a space
-\thanks{Manuscript received April 19, 2005; revised August 26, 2015.}}
-
-% note the % following the last \IEEEmembership and also \thanks - 
-% these prevent an unwanted space from occurring between the last author name
-% and the end of the author line. i.e., if you had this:
-% 
-% \author{....lastname \thanks{...} \thanks{...} }
-%                     ^------------^------------^----Do not want these spaces!
-%
-% a space would be appended to the last name and could cause every name on that
-% line to be shifted left slightly. This is one of those "LaTeX things". For
-% instance, "\textbf{A} \textbf{B}" will typeset as "A B" not "AB". To get
-% "AB" then you have to do: "\textbf{A}\textbf{B}"
-% \thanks is no different in this regard, so shield the last } of each \thanks
-% that ends a line with a % and do not let a space in before the next \thanks.
-% Spaces after \IEEEmembership other than the last one are OK (and needed) as
-% you are supposed to have spaces between the names. For what it is worth,
-% this is a minor point as most people would not even notice if the said evil
-% space somehow managed to creep in.
-
-
-
-% The paper headers
-\markboth{Journal of \LaTeX\ Class Files,~Vol.~14, No.~8, August~2015}%
-{Shell \MakeLowercase{\textit{et al.}}: Bare Advanced Demo of IEEEtran.cls for IEEE Computer Society Journals}
-% The only time the second header will appear is for the odd numbered pages
-% after the title page when using the twoside option.
-% 
-% *** Note that you probably will NOT want to include the author's ***
-% *** name in the headers of peer review papers.                   ***
-% You can use \ifCLASSOPTIONpeerreview for conditional compilation here if
-% you desire.
-
-
-
-% The publisher's ID mark at the bottom of the page is less important with
-% Computer Society journal papers as those publications place the marks
-% outside of the main text columns and, therefore, unlike regular IEEE
-% journals, the available text space is not reduced by their presence.
-% If you want to put a publisher's ID mark on the page you can do it like
-% this:
-%\IEEEpubid{0000--0000/00\$00.00~\copyright~2015 IEEE}
-% or like this to get the Computer Society new two part style.
-%\IEEEpubid{\makebox[\columnwidth]{\hfill 0000--0000/00/\$00.00~\copyright~2015 IEEE}%
-%\hspace{\columnsep}\makebox[\columnwidth]{Published by the IEEE Computer Society\hfill}}
-% Remember, if you use this you must call \IEEEpubidadjcol in the second
-% column for its text to clear the IEEEpubid mark (Computer Society journal
-% papers don't need this extra clearance.)
-
-
-
-% use for special paper notices
-%\IEEEspecialpapernotice{(Invited Paper)}
-
-
-
-% for Computer Society papers, we must declare the abstract and index terms
-% PRIOR to the title within the \IEEEtitleabstractindextext IEEEtran
-% command as these need to go into the title area created by \maketitle.
-% As a general rule, do not put math, special symbols or citations
-% in the abstract or keywords.
-\IEEEtitleabstractindextext{%
-\begin{abstract}
-The abstract goes here.
-\end{abstract}
-
-% Note that keywords are not normally used for peerreview papers.
-\begin{IEEEkeywords}
-Computer Society, IEEE, IEEEtran, journal, \LaTeX, paper, template.
-\end{IEEEkeywords}}
-
-
-% make the title area
 \maketitle
 
+\clearpage
+\tableofcontents
+\clearpage
 
-% To allow for easy dual compilation without having to reenter the
-% abstract/keywords data, the \IEEEtitleabstractindextext text will
-% not be used in maketitle, but will appear (i.e., to be "transported")
-% here as \IEEEdisplaynontitleabstractindextext when compsoc mode
-% is not selected <OR> if conference mode is selected - because compsoc
-% conference papers position the abstract like regular (non-compsoc)
-% papers do!
-\IEEEdisplaynontitleabstractindextext
-% \IEEEdisplaynontitleabstractindextext has no effect when using
-% compsoc under a non-conference mode.
+\section{Einleitung}
 
+Da die vertikale Skalierung von Re\-chen\-re\-ssourc\-en aufwändiger wird, wird
+das nutzen von verteilten Re\-chen\-re\-ssourc\-en zunehmend wichtiger. Anstatt
+ein Re\-chen\-pro\-blem einer einzelnen re\-chen\-star\-ken Maschine zu geben, kann
+die Rech\-en\-kraft vieler Maschinen (Nodes) genutzt werden. Dafür ist es
+wichtig die Aufgabe effizient in Teilaufgaben zu unterteilen sowie die
+Teilaufgaben und die Nodes auszugeben und einzusammeln. Die
+Kommunikation zu den Nodes wird oft über Messaging Protokolle gelößt.
 
-% For peer review papers, you can put extra information on the cover
-% page as needed:
-% \ifCLASSOPTIONpeerreview
-% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
-% \fi
-%
-% For peerreview papers, this IEEEtran command inserts a page break and
-% creates the second title. It will be ignored for other modes.
-\IEEEpeerreviewmaketitle
+Im Rahmen des Forschungsprojekts ``Grischa'', an der HTW Berlin, wird an
+Verteilten Systemen geforscht. Grischa ist ein Schachprogramm, welches
+versucht möglichst viele Züge im Vorraus zu evaluieren und dabei, im
+Gegensatz zu vielen anderen, ohne Heuristiken oder oder Neuronale Netze
+arbeitet. Dafür wird eine Menge an Nodes mittels Grid-Computing genutzt,
+die nach den bestmöglichen Zügen suchen. Für die Kommunikation zwischen
+den verteilten Rechenressourcen wird derzeit die Messaging Bibliothek
+ZeroMQ benutzt.
 
+Ziel dieser Arbeit ist die Analyse von Grischas Messaging-System sowie
+die Evaluation von ZeroMQ mittels Gegenüberstellung zu einer alternative
+namens ``nanomsg" in den Punkten Geschwindigkeit und Bedienbarkeit.
 
-\ifCLASSOPTIONcompsoc
-\IEEEraisesectionheading{\section{Introduction}\label{sec:introduction}}
-\else
-\section{Introduction}
-\label{sec:introduction}
-\fi
-% Computer Society journal (but not conference!) papers do something unusual
-% with the very first section heading (almost always called "Introduction").
-% They place it ABOVE the main text! IEEEtran.cls does not automatically do
-% this for you, but you can achieve this effect with the provided
-% \IEEEraisesectionheading{} command. Note the need to keep any \label that
-% is to refer to the section immediately after \section in the above as
-% \IEEEraisesectionheading puts \section within a raised box.
+\section{Analyse}
 
+Grischa wurde historisch mit verschiedenen Kom\-mu\-ni\-ka\-tions\-stra\-te\-gien
+be\-trie\-ben, z.B. auch mit Redis \cite{noauthor_redis_nodate}. Die für diese Arbeit relevante
+Implementierung, ZeroMQ, besteht aus 3 Teil\-an\-wen\-dun\-gen:
 
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\itemsep1pt\parskip0pt\parsep0pt
+\item  ``GClient'': Zuständig für die Zuteilung der Aufgaben sowie
+  Schnittstelle zur Spielfläche/GUI (z.B. XBoard). \cite[p.8]{rosenfeld_messaging_2019}
+\item  ``GNode'': Stellt die Worker-Node dar. Nimmt Aufgaben vom GClient
+  entgegen und bewertet Spielzüge. Je mehr GNode Instanzen erstellt
+  werden, desto mehr Spielzüge können berechnet werden. \cite[p.9]{rosenfeld_messaging_2019}
+\item  ``GBroker'': Stellt den Message Broker dar, der die Kommunikation
+  zwischen den Anwendungen GClient und GNode handhabt. Zwar kann ZeroMQ
+  auch ohne Message Broker arbeiten, er erleichtert jedoch Anmeldung und
+  Ausfall von Nodes. Gleichzeitig können GNodes über den GBroker ihre
+  Ergebnisse zurück geben. \cite[p. 13]{rosenfeld_messaging_2019}
+\end{enumerate}
 
-
-% The very first letter is a 2 line initial drop letter followed
-% by the rest of the first word in caps (small caps for compsoc).
-% 
-% form to use if the first word consists of a single letter:
-% \IEEEPARstart{A}{demo} file is ....
-% 
-% form to use if you need the single drop letter followed by
-% normal text (unknown if ever used by the IEEE):
-% \IEEEPARstart{A}{}demo file is ....
-% 
-% Some journals put the first two words in caps:
-% \IEEEPARstart{T}{his demo} file is ....
-% 
-% Here we have the typical use of a "T" for an initial drop letter
-% and "HIS" in caps to complete the first word.
-\IEEEPARstart{T}{his} demo file is intended to serve as a ``starter file''
-for IEEE Computer Society journal papers produced under \LaTeX\ using
-IEEEtran.cls version 1.8b and later.
-% You must have at least 2 lines in the paragraph with the drop letter
-% (should never be an issue)
-I wish you the best of success.
-
-\hfill mds
- 
-\hfill August 26, 2015
-
-\subsection{Subsection Heading Here}
-Subsection text here.
-
-% needed in second column of first page if using \IEEEpubid
-%\IEEEpubidadjcol
-
-\subsubsection{Subsubsection Heading Here}
-Subsubsection text here.
+Für diese Arbeit ist die Message-Basierte Kommunikation von vorrangiger
+Bedeutung. Dafür wird ZMQ an zwei Stellen eingesetzt.
 
 
-% An example of a floating figure using the graphicx package.
-% Note that \label must occur AFTER (or within) \caption.
-% For figures, \caption should occur after the \includegraphics.
-% Note that IEEEtran v1.7 and later has special internal code that
-% is designed to preserve the operation of \label within \caption
-% even when the captionsoff option is in effect. However, because
-% of issues like this, it may be the safest practice to put all your
-% \label just after \caption rather than within \caption{}.
-%
-% Reminder: the "draftcls" or "draftclsnofoot", not "draft", class
-% option should be used if it is desired that the figures are to be
-% displayed while in draft mode.
-%
-%\begin{figure}[!t]
-%\centering
-%\includegraphics[width=2.5in]{myfigure}
-% where an .eps filename suffix will be assumed under latex, 
-% and a .pdf suffix will be assumed for pdflatex; or what has been declared
-% via \DeclareGraphicsExtensions.
-%\caption{Simulation results for the network.}
-%\label{fig_sim}
-%\end{figure}
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\itemsep1pt\parskip0pt\parsep0pt
+\item In der Kommunikation zwischen GNodes und GClients. Dies wird umgesetzt
+in Sternförmiger Topologie mit dem XPubXSub Modell. Der Vorteil von PubSub sind die
+Topic-gesteuerten Nachrichten via URI Adressierung. Mit einem Broker zwischen Publishern und Subscribern löst man das "Dynamic Discovery Problem". Neue Nodes, egal ob Publisher oder Subscriber, verbinden sich mit diesem Vermittelnden Proxy. Aus PubSub wird so XPubXSub. 
+In Grischa wird weitergehend für jede Datenflussrichtung eine Verbindung erstellt, sodass man eine bidirektionale Verbindung besteht. So
+So kann jedes Modul mit jedem anderen Modul kommunizieren. \cite[p. 43]{rosenfeld_messaging_2019} Für diese Datenverbindung wird das TCP Protokoll genutzt, da die Anwendungen über das Netzwerk miteinander Kommunizieren müssen.  
+\item In der Kommunikation zwischen den internen Modulen der GNode Anwendung. Da hier zwischen den Modulen kommuniziert wird, wird das IPC Protokoll eingesetzt.
+\end{enumerate}
 
-% Note that the IEEE typically puts floats only at the top, even when this
-% results in a large percentage of a column being occupied by floats.
-% However, the Computer Society has been known to put floats at the bottom.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=12cm]{./images/5_10_Topologie_der_Kommunikationspfade_der_verteilten_Anwendung_mit_Modulen.png}
+\caption{Topologie der Kommunikationspfade der verteilten Anwendung mit Modulen}
+\end{figure}
 
+\section{Planung}
+Relevant für die Grischa Anwendung ist weniger die Echtzeit-Verarbeitung
+und mehr die Skalierbarkeit auf viele GNodes mit einem weiterhin
+Stabilen Nachrichtendurchsatz. Da in Grischa sowohl das TCP als auch das
+IPC Protokoll genutzt wird, sollen beide Protokolle untersucht werden.
+Desweiteren soll betrachtet werden wie sich der Durchsatz im Verhältnis
+zur Nachrichtengröße verhält. Diese Parameter sollen sowohl auf dem
+bisherigen System ZeroMQ als auch auf der Alternative nanomsg umgesetzt
+werden.
 
-% An example of a double column floating figure using two subfigures.
-% (The subfig.sty package must be loaded for this to work.)
-% The subfigure \label commands are set within each subfloat command,
-% and the \label for the overall figure must come after \caption.
-% \hfil is used as a separator to get equal spacing.
-% Watch out that the combined width of all the subfigures on a 
-% line do not exceed the text width or a line break will occur.
-%
-%\begin{figure*}[!t]
-%\centering
-%\subfloat[Case I]{\includegraphics[width=2.5in]{box}%
-%\label{fig_first_case}}
-%\hfil
-%\subfloat[Case II]{\includegraphics[width=2.5in]{box}%
-%\label{fig_second_case}}
-%\caption{Simulation results for the network.}
-%\label{fig_sim}
-%\end{figure*}
-%
-% Note that often IEEE papers with subfigures do not employ subfigure
-% captions (using the optional argument to \subfloat[]), but instead will
-% reference/describe all of them (a), (b), etc., within the main caption.
-% Be aware that for subfig.sty to generate the (a), (b), etc., subfigure
-% labels, the optional argument to \subfloat must be present. If a
-% subcaption is not desired, just leave its contents blank,
-% e.g., \subfloat[].
+Zusammengefasst sind die untersuchten Parameter:
+\begin{itemize}
+\itemsep4pt\parskip0pt\parsep0pt
+    \item
+    Message-Bibliothek (ZeroMQ und nanomsg)
+    \item
+    Nachrichtengröße (als \texttt{msg\_size} bezeichnet) 
+    \item
+    Anzahl der Nodes (als \texttt{worker\_count} bezeichnet) 
+    \item
+  Protokoll (TCP und IPC)
+\end{itemize}
 
+Um dem Anwendungsfall von Grischa nachzustellen, wird neben Master-
+(Client) und Worker-Nodes auch mit einem Router gearbeitet. Da das
+PubSub-Modell die Komplexität durch das Topic-basierte Abbonieren von
+Nachrichten erhöht, wird auf Request-Reply zurückgegriffen (ReqRep bzw.,
+aufgrund des Brokers, XReqXRep) \cite{noauthor_xsub-xpub_nodate}. Die Architektur ist auf Abbildung \ref{figgure:architecture_testsystem} abgebildet.
 
-% An example of a floating table. Note that, for IEEE style tables, the
-% \caption command should come BEFORE the table and, given that table
-% captions serve much like titles, are usually capitalized except for words
-% such as a, an, and, as, at, but, by, for, in, nor, of, on, or, the, to
-% and up, which are usually not capitalized unless they are the first or
-% last word of the caption. Table text will default to \footnotesize as
-% the IEEE normally uses this smaller font for tables.
-% The \label must come after \caption as always.
-%
-%\begin{table}[!t]
-%% increase table row spacing, adjust to taste
-%\renewcommand{\arraystretch}{1.3}
-% if using array.sty, it might be a good idea to tweak the value of
-% \extrarowheight as needed to properly center the text within the cells
-%\caption{An Example of a Table}
-%\label{table_example}
-%\centering
-%% Some packages, such as MDW tools, offer better commands for making tables
-%% than the plain LaTeX2e tabular which is used here.
-%\begin{tabular}{|c||c|}
-%\hline
-%One & Two\\
-%\hline
-%Three & Four\\
-%\hline
-%\end{tabular}
-%\end{table}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=12cm]{./images/architecture.png}
+\caption{Die Architektur des Testsystems}
+\label{figgure:architecture_testsystem}
+\end{figure}
 
+Desweiteren soll sichergestellt sein, dass die einzigen Unterschiede
+zwischen den Implementierungen von ZeroMQ und nanomsg lediglich die
+Bibliotheksrelevanten Schnitstellen sind. Die Business-Logik sollte möglichst
+gleich sein, um diesseitige Auswirkung auf die Performance
+auszuschließen. Die Anwendungen sollen außerdem separat kompiliert
+werden damit kein nicht gebrauchter Code das Programm verlangsamt. Außerdem
+sollten Unterschiede durch Präprozessordirektiven
+ausgeschlossen werden indem die gleiche Programmiersprache mit den
+gleichen Compileroptionen verwendet werden.
 
-% Note that the IEEE does not put floats in the very first column
-% - or typically anywhere on the first page for that matter. Also,
-% in-text middle ("here") positioning is typically not used, but it
-% is allowed and encouraged for Computer Society conferences (but
-% not Computer Society journals). Most IEEE journals/conferences use
-% top floats exclusively. 
-% Note that, LaTeX2e, unlike IEEE journals/conferences, places
-% footnotes above bottom floats. This can be corrected via the
-% \fnbelowfloat command of the stfloats package.
+\section{Durchführung}
 
+Als Programmiersprache für die Implementierungen wurden vorrangig die
+nativen implementierungen von ZeroMQ und nanomsg in Betracht gezogen,
+damit einem Performanceverlust durch Übersetzungsschichten vorgebeugt
+wird. ZeroMQ ist nativ in C++ (libzmq), nanomsg in C geschrieben. Da die
+Entwicklung an ZeroMQ bereits 2007 angefangen hat sowie heute deutlich
+populärer ist und Version 1.0 von nanomsg erst Mitte 2016 erschienen
+ist, gibt es mehrere Wrapper von ZeroMQ in C \cite{noauthor_omq_2007}.
+Da man daher davon ausgehen kann dass ZeroMQ
+ausgereifter ist, wurde sich auf C als gemeinsame Programmiersprache
+festgelegt. Bei nanomsg kann so die native Bibliothek benutzt werden
+während bei ZeroMQ czmq als High-Level Language-Binding genutzt wird.
 
+\subsection{Worker}
 
+Zuerst generiert der Worker eine zufällige Zeichenkette zum übertragen
+mit der Länge von $2^i$, wobei $i$ bis zum vom Benutzer angegebenen
+$max\_msg\_size\_power$ läuft. In die gleiche Nachricht werden die
+Metainformationen aus Tabelle \ref{table:msg_header} beigefügt
+ohne die Größe zu verändern.
 
-\section{Conclusion}
-The conclusion goes here.
+Danach wird die Nachricht mit ZeroMQ bzw. nanomsg abgesendet. Dafür wird
+in beiden Fällen eine Art Kontext/Socket erstellt und sich mit dem
+Broker verbunden. Die Nachricht wird abgesendet, die Antwort empfangen
+und direkt gelöscht. Dieser Senden/Empfangen Ablauf wird
+$repetitions$-mal wiederholt (Standardmäßig 8912 mal). Danach werden die
+Messagingbibliotheksspezifischen Daten gelöscht.
 
+\subsection{Router}
 
+Der Router beschränkt sich, sowohl bei ZeroMQ als auch bei nanomsg, auf
+sehr wenig Code. Daher wurden hier eigene Programme für beide
+Bibliotheken implementiert.
 
+Die Schnittstellen von ZeroMQ und nanomsg sind sehr ähnlich. Beide
+erschaffen jeweils einen Socket für die Master Node(s) und die Client
+Nodes. Diese Sockets werden an eine URI gebunden und schlussendlich wird
+ein Proxy (ZeroMQ) bzw. ein ``Device'' (nanomsg) gestartet. Von dortan
+werden alle Nachrichten entsprechend weitergeleitet.
 
+\subsection{Client (Master)}
 
-% if have a single appendix:
-%\appendix[Proof of the Zonklar Equations]
-% or
-%\appendix  % for no appendix heading
-% do not use \section anymore after \appendix, only \section*
-% is possibly needed
+Der Client übernimmt die das Benchmarking selbst. Zuerst initialisiert
+er die Verbindung zum Broker. Dann stoppt er die Zeit zum Empfangen,
+Verarbeiten und Antworten von $repetitions * clients$ Nachrichten: Wiederholungen sowie Anzahl der Clients (jeweils aus dem Header der
+Nachricht entnommen). 
 
-% use appendices with more than one appendix
-% then use \section to start each appendix
-% you must declare a \section before using any
-% \subsection or using \label (\appendices by itself
-% starts a section numbered zero.)
-%
+\begin{table}[h!]
+\centering
+\begin{tabular}{l | l} 
+    Inhalt & Beschreibung \\
+    \hline
+     \texttt{tag} & Flags für die steuerung des Workers \\
+     \texttt{client\_id} & Numerische ID des Senders \\
+     \texttt{msg\_size} & Message Größe \\
+     \texttt{repetitions} & Wiederholungen dieser 
+     \texttt{msg\_size}. I.d.R. 8192 \\
+     \texttt{worker\_count} & Anzahl gestarteter Clients \\
+ \hline
+\end{tabular}
+\caption{Metainformationen einer Nachricht (Header)}
+\label{table:msg_header}
+\end{table}
 
+\subsection{Setup}
 
-\appendices
-\section{Proof of the First Zonklar Equation}
-Appendix one text goes here.
+\subsubsection{Software}
 
-% you can choose not to have a title for an appendix
-% if you want by leaving the argument blank
-\section{}
-Appendix two text goes here.
+Es werden Datengrößen (\texttt{msg\_size}) zwischen 4 Byte und 64 KiB
+untersucht sowie Client Mengen zwischen 1 und 128 - jeweils in quadratischer Reihe. Für
+die Auswertung wird eine Teilmenge an Datenreihen ausgewählt sofern es die Darstellung
+der Ergebnisse nicht verfälscht. Alle Rohdaten sind im Repository zu finden.
 
+Jeder Datenpunkt (Bibliothek, Protokoll, \texttt{msg\_size}, \texttt{client\_count}) 
+wird 10 mal abgebildet. Daraus wird ein Durchschnitt gebildet.
 
-% use section* for acknowledgment
-\ifCLASSOPTIONcompsoc
-  % The Computer Society usually uses the plural form
-  \section*{Acknowledgments}
-\else
-  % regular IEEE prefers the singular form
-  \section*{Acknowledgment}
-\fi
+Beide Programme werden mit den Compileroptionen \texttt{-O3} und
+\texttt{-march=native} compelliert, um auch Optimierungen wie loops
+unrolling sowie AVX2 zu er\-mö\-glich\-en.
 
+Am Benchmarking System wurden keine Änderungen an TCP send/recv buffern, an der Maximum Transmission Unit, am Socket backlog oder der Tramsit queue length vorgenommen. Die Werte sind in Tabelle \ref{table:tcp_settings} dokumentiert.
 
-The authors would like to thank...
+\begin{table}[h!]
+\centering
+\begin{tabular}{l | l} 
+    Einstellung & Wert \\
+    \hline
+    TCP recv buffer & 4096	131072 6291456 \\
+    TCP send buffer & 4096	16384 4194304 \\
+    Socket backlog & 4096 \\
+    Maximum Transmission Unit & 65536 \\
+    Transmit queue length & 1000 \\
+ \hline
+\end{tabular}
+\caption{Netzwerk Buffer und Parameter}
+\label{table:tcp_settings}
+\end{table}
 
+\subsubsection{Hardware}
+Um den Anwendungsfall von Grid-Computing Nahe zu kommen, wird Server-Grade
+Hardware eines Cloud Dienstleisters angemietet. Dabei wurde darauf geachtet dedizierte
+Rechenkerne anzumieten, um zu verhindern dass Lastspizen anderer Programme 
+auf dem gleichen Physischen Kern die Ergebnisse verfälschen. 
 
-% Can use something like this to put references on a page
-% by themselves when using endfloat and the captionsoff option.
-\ifCLASSOPTIONcaptionsoff
-  \newpage
-\fi
+\begin{table}[h!]
+\centering
+\begin{tabular}{l | l} 
+    Komponente & Spezifikation \\
+    \hline
+     CPU Typ & AMD EPIC der 7003-Serie (Zen 3) \\
+     CPU Kerne & 8 vCPU Kerne \\
+     RAM & 32 GB \\
+     Disk & 240 GB SSD \\
+     System & Ubuntu 20.4 \\  [1ex] 
+ \hline
+\end{tabular}
+\caption{Eingesetztes System zum Benchmarking}
+\label{table:used_hardware}
+\end{table}
 
+\section{Erwartungshaltung}
 
+\subsection{ZeroMQ vs nanomsg}
 
-% trigger a \newpage just before the given reference
-% number - used to balance the columns on the last page
-% adjust value as needed - may need to be readjusted if
-% the document is modified later
-%\IEEEtriggeratref{8}
-% The "triggered" command can be changed if desired:
-%\IEEEtriggercmd{\enlargethispage{-5in}}
+Da beide Bibliotheken die gleiche unterliegende Technologie nutzen (Unix
+Sockets) und synchron arbeiten, wird von einer Performance in den gleichen Grö\-ßen\-ord\-nun\-gen
+ausgegangen. 
 
-% references section
+Mit zunehmender Anzahl an Workern (\texttt{worker\_count}) sollte der Durchsatz
+steigen. Ab einem zu bestimmenden Punkt könnte der Message-Broker 
+in beiden Bibliotheken ein Flaschenhals darstellen. Nach einem kurzen Plateau könnte
+der Durchsatz dann zurückgehen, da die zusätzlichen Worker das System belasten.
 
-% can use a bibliography generated by BibTeX as a .bbl file
-% BibTeX documentation can be easily obtained at:
-% http://mirror.ctan.org/biblio/bibtex/contrib/doc/
-% The IEEEtran BibTeX style support page is at:
-% http://www.michaelshell.org/tex/ieeetran/bibtex/
-%\bibliographystyle{IEEEtran}
-% argument is your BibTeX string definitions and bibliography database(s)
-%\bibliography{IEEEabrv,../bib/paper}
-%
-% <OR> manually copy in the resultant .bbl file
-% set second argument of \begin to the number of references
-% (used to reserve space for the reference number labels box)
-\begin{thebibliography}{1}
+Die \texttt{msg\_size} sollte sich mit zunehmender Größe ebenfalls
+positiv auf den Durchsatz
+auswirken. Auch hier muss ein Punkt kommen, an dem der Durchsatz
+stagniert und gegebenenfalls wieder sinkt. Zwar ist die maximale
+Packetgröße von TCP Packeten 64kiB,
+Ethernet aber hat teils deutlich geringere Maximum Transmission Units
+von 1500 (Ethernet) bis 9000 (Gigabit Ethernet) \cite{noauthor_maximum_2021}. Daher kommt es
+gegebenenfalls auch auf die Implementierung von ZeroMQ und nanomsg an.
 
-\bibitem{IEEEhowto:kopka}
-H.~Kopka and P.~W. Daly, \emph{A Guide to {\LaTeX}}, 3rd~ed.\hskip 1em plus
-  0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
+\subsection{TCP vs IPC}
 
-\end{thebibliography}
+Da das TCP Protokoll vielseitiger Einsetzbar ist lokal durch das Loopback-Device genutzt wird, wird von einem Mehraufwand und 
+daher langsamen Ge\-schwin\-dig\-keit\-en ausgegangen. 
 
-% biography section
-% 
-% If you have an EPS/PDF photo (graphicx package needed) extra braces are
-% needed around the contents of the optional argument to biography to prevent
-% the LaTeX parser from getting confused when it sees the complicated
-% \includegraphics command within an optional argument. (You could create
-% your own custom macro containing the \includegraphics command to make things
-% simpler here.)
-%\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{mshell}}]{Michael Shell}
-% or if you just want to reserve a space for a photo:
+\section{Ergebnisse}
 
-\begin{IEEEbiography}{Michael Shell}
-Biography text here.
-\end{IEEEbiography}
+nanomsg stürtzt wiederholt bei der maximal eingestellten
+\texttt{client\_size} von 128 und einer \texttt{msg\_size} von 1024
+Bytes ab. Daher konnte diese Reihe nicht beendet werden.
 
-% if you will not have a photo at all:
-\begin{IEEEbiographynophoto}{John Doe}
-Biography text here.
-\end{IEEEbiographynophoto}
+Trotz großer Bemühungen konnte ZeroMQ nur mittels TCP und nicht mit IPC
+betrieben werden. Der Vergleich zwischen TCP und IPC kann jedoch mit
+nanomsg durchgeführt werden.
 
-% insert where needed to balance the two columns on the last page with
-% biographies
-%\newpage
+\subsection{ZeroMQ}
 
-\begin{IEEEbiographynophoto}{Jane Doe}
-Biography text here.
-\end{IEEEbiographynophoto}
+ZeroMQs Durchsatz nimmt mit zunehmender \texttt{msg\_size} zu. Ein
+Einbruch konnte nicht gemessen werden. Der Durchsatz steigt 
+ebenfalls mit der Anzahl an Clients. Signifikant bis etwa 16, 
+danach noch leicht bis 64. Danach nimmt der Durchsatz wenige Prozent ab.
 
-% You can push biographies down or up by placing
-% a \vfill before or after them. The appropriate
-% use of \vfill depends on what kind of text is
-% on the last page and whether or not the columns
-% are being equalized.
+Am höchsten ist der Durchsatz bei einer \texttt{msg\_size} von 64KiB und 64 Workern mit 1444 MiB/s. 
 
-%\vfill
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=12cm]{images/chart(1).png}
+\caption{ZeroMQ Durchsatz abhängig von \texttt{worker\_count} (TCP)}
+\end{figure}
 
-% Can be used to pull up biographies so that the bottom of the last one
-% is flush with the other column.
-%\enlargethispage{-5in}
+\subsection{nanomsg}
 
+Der Durchsatz der nanomsg Implementierung nimmt ebenfalls mit
+zunehmender \texttt{msg\_size} zu. Eine steigende Anzahl an Clients sorgt für einen Steigenden Durchsatz, bis zu einer Größe von ca. 64 Clients. Im Gegensatz zu ZeroMQ fällt mit
+zusätzlicher Erhöhung von Clients der Durchsatz kaum.
 
+Der höchste gemessene Durchsatz bei nanomsg beträgt 1333 MiB/s mit 64
+Clients und einer \texttt{msg\_size} von 64KiB.
 
-% that's all folks
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=12cm]{images/chart(2).png}
+\caption{nanomsg Durchsatz abhängig von \texttt{worker\_count} (TCP)}
+\end{figure}
+
+\begin{figure}[htbp]
+\includegraphics[width=12cm]{images/chart(3).png}
+\caption{Durchsatz von ZeroMQ und nanomsg im Vergleich abhängig von \texttt{worker\_count}}
+\end{figure}
+
+\subsection{TCP vs IPC}
+
+Mit IPC kann ein Speedup zwischen 0.98 und 1.72 gemessen werden. Der
+Durchschnitt aller 107 Messpunkte beträgt ca. 1.28, der Median liegt bei
+ca. 1.27. Die Messungen schwanken stark und es lässt sich kein
+unmittelbares Muster erkennen.
+
+Besonders groß ist der Speedup bei kleinen Nachrichten und vielen Workern. 
+Dies könnte auf den kleineren Overhead von IPC gegenüber TCP zurückzuführen
+sein. 
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=12cm]{images/chart(4).png}
+\caption{Speedup IPC gegenüber TCP bei unterschiedlicher \texttt{worker\_size}}
+\end{figure}
+
+\section{Diskussion}
+
+Es wurden keine Punkte festgestellt, an dem eine Erhöhung der \texttt{msg\_size} den Durchsatz senkt. Vermutlich wird eine noch höhere \texttt{msg\_size} benötigt. Andere Forscher 
+scheinen diese Grenze bei genau 64KiB festgemach zu haben \cite{barroso_benchmarking_2016}. 
+Zwischen 4 und 8 Byte ist ein Plateau zu sehen welches durch die verhältnismäßig 
+kleine Größe der Nachricht zum Bibliotheks- und Protokoll-Header zu erklären sein könnte.
+
+ZMQ unterliegt nanomsg bei einem Worker um 5-15\%, holt diesen Verlust
+bei mehreren Workern allerdings schnell raus. So ist ZeroMQ mit 32 Workern 
+in bereits 20-40\% schneller.
+
+Beide Tools erreichen für Grischa ausreichende Durchsätze von über 1333 MiB/s (nanomsg) bzw. 
+1444 MiB/s (ZeroMQ). Das Fehlverhalten bei nanomsg ab 128 Workern und 1 KiB
+wäre für einen Produktivbetrieb bedenklich, gerade wenn die Nachrichtengröße
+dynamisch ist.
+
+Der Speedup von IPC gegenüber TCP ist mit Durchschnittlich 28\% als
+moderat aber eindeutig zu bewerten. Gerade bei kleinen Nachrichten kann IPC Punkten. 
+
+Aufgrund des geringen Speedups von IPC kann es Vorteilhaft sein von vornherein 
+auf TCP zu setzen, um eine spätere Reimplementierung zu verhindern, sofern
+man sich Entscheidet die Anwendungen auf verteilte Systeme zu verlagern. 
+Da der Umstieg bei nanomsg von IPC auf TCP (und andersherum) einen 
+Geringen Aufwand mitbringt, trifft dies besonders auf ZeroMQ zu.
+Grund\-sätz\-lich kann man starke Schwankungen in den Daten erkennen. 
+
+Das Grischa Projekt nutzt im TCP Protokoll meist Nachrichten von 
+ca. 64-128 Bytes Länge
+mit einer möglichst großen Menge an Workern. In diesem Bereich hat
+nanomsg ca. 50\% des Durchsatzes von ZeroMQ. Ein Umstieg auf nanomsg 
+aufgrund dieser Metrik allein ist nach diesen Messungen nicht ratsam.
+Über die Nachrichten im IPC Protokoll fällt es schwerer ein Urteil zu fällen,
+da ZeroMQ nicht mit IPC arbeiten wollte. 
+
+\section{Zusammenfassung}
+
+ZeroMQ und nanomsg bieten einen ähnlichen Durchsatz. 
+nanomsg hat die Oberhand bei einem Worker, ZeroMQ mit mehreren. 
+Da nanomsg, im Gegensatz zu ZeroMQ, nicht alle Testläufe erfolgreich
+abschließen konnte, scheint ZeroMQ das reifere oder auch nur 
+einfachere Tool zu sein.
+
+Nur nanomsg konnte mit sowohl TCP als auch IPC getestet werden. Hier
+konnte ein Speedup von durchschnittlich 28\% erzielt werden. Die
+Ergebnisse unterliegen allerdings großen Schwankungen.
+
+Im Einsatzbereich des Grischa Projekts (kleine Nachrichten, viele
+Worker) wird beim Umstieg auf nanomsg der Datendurchsatz sinken. Ein
+Umstieg ist aufgrund dieser Metrik nicht Ratsam.
+
+\section{Ausblick}
+
+Die Ergebnisse stützen sich auf eine Request-Reply Pattern mit Broker
+während Grischa ein komplexeres Publish-Subscribe Pattern 
+mit Broker nutzt (XPubXSub). Eine Implementierung vom XPubXSub
+könnte Sicherheit schaffen, dass sich die Performance unter
+diesen Umständen ähnlich verhält. 
+
+Die Benchmarks wurden nur auf einer Node ausgeführt. Um 
+den Aufbau weiter an Grischa anzulehnen, müssten die Nodes 
+Real auf unterschiedlichen Systemen laufen.
+
+nanomsg hat einen Nachfolger namens nng ("nanomsg-next-gen"). Diese Reimplementierung verspricht 
+Verlässlichkeit und Skalierbarkeit \cite{noauthor_nanomsgnng_2021}. Eine Ge\-gen\-ü\-ber\-stell\-ung
+zu nanomsg könnte interessante Ergebnisse bringen.
+\clearpage
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\listoffigures
+
 \end{document}
-
-
